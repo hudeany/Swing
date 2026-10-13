@@ -17,7 +17,7 @@
 			</fileset>
 		</delete>
 
-		<getMavenDependency repositoryUrl="https://soderer.de/maven2" groupId="de.soderer" artifactId="soderer-utilities" version="${soderer-utilities.version}" />
+		<getDependency name="soderer-utilities" version="${soderer-utilities.version}" url="https://github.com/hudeany/Utilities/releases/download/{version}/soderer-utilities-{version}.jar" />
 	</target>
 
 	<!-- Special: AntBuildHelp is used to download the runtime libraries -->
