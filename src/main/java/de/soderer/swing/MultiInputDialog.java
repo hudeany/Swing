@@ -8,6 +8,8 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,9 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import de.soderer.utilities.Utilities;
 
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.Utilities;
 
 /**
  * Modal dialog with a text and one labeled input field per label text.
@@ -70,6 +72,17 @@ public class MultiInputDialog extends ModalDialog<List<String>> {
 
 		createComponents();
 
+		// requestFocus() before the dialog is visible has no effect, so focus the first input field once it is shown
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowOpened(final WindowEvent event) {
+				// A dialog without labels has no input field to focus
+				if (!textFields.isEmpty()) {
+					textFields.get(0).requestFocusInWindow();
+				}
+			}
+		});
+
 		returnValue = null;
 	}
 
@@ -78,11 +91,22 @@ public class MultiInputDialog extends ModalDialog<List<String>> {
 	 *
 	 * @param defaultTexts initial values in the order of the labels; missing or
 	 *            null entries leave the field empty
-	 * @return this dialog for chaining
 	 */
-	public MultiInputDialog setDefaultTexts(final String[] defaultTexts) {
+	public void setDefaultTexts(final String[] defaultTexts) {
 		this.defaultTexts = defaultTexts;
 		createComponents();
+	}
+
+	/**
+	 * Sets the initial values of the input fields and returns this dialog for
+	 * chaining.
+	 *
+	 * @param defaultTextsValue initial values in the order of the labels; missing
+	 *            or null entries leave the field empty
+	 * @return this dialog for chaining
+	 */
+	public MultiInputDialog withDefaultTexts(final String... defaultTextsValue) {
+		setDefaultTexts(defaultTextsValue);
 		return this;
 	}
 
@@ -98,10 +122,11 @@ public class MultiInputDialog extends ModalDialog<List<String>> {
 		if (Utilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			final Font f = textField.getFont();
-			final Font f2 = new Font("Arial", f.getStyle(), f.getSize());
-			textField.setFont(f2);
+			textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));
 			textField.setText(text);
 			textField.setEditable(false);
+			// Not focusable: it would otherwise get the initial focus and swallow the Enter key
+			textField.setFocusable(false);
 			textField.setBackground(panel.getBackground());
 
 			final JScrollPane textScrollpane = new JScrollPane(textField);
@@ -136,8 +161,7 @@ public class MultiInputDialog extends ModalDialog<List<String>> {
 
 			final JTextField inputField = new JTextField();
 			final Font f = inputField.getFont();
-			final Font f2 = new Font("Arial", f.getStyle(), f.getSize() + 2);
-			inputField.setFont(f2);
+			inputField.setFont(f.deriveFont(f.getSize2D() + 2));
 			inputField.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 			inputField.setPreferredSize(new Dimension(250, inputField.getPreferredSize().height));
 			if (defaultTexts != null && defaultTexts.length > index && defaultTexts[index] != null) {
@@ -203,10 +227,5 @@ public class MultiInputDialog extends ModalDialog<List<String>> {
 		pack();
 
 		setLocationRelativeTo(getOwner());
-
-		// A dialog without labels has no input field to focus
-		if (!textFields.isEmpty()) {
-			textFields.get(0).requestFocus();
-		}
 	}
 }

@@ -1,6 +1,9 @@
 package de.soderer.swing;
 
+import java.awt.Component;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,6 +37,34 @@ public class SwingUtilities {
 	 * @param clazz class to initialize
 	 */
 	public static void forceConstructorInit(final Class<?> clazz) {
+		if (GraphicsEnvironment.isHeadless() && Component.class.isAssignableFrom(clazz)) {
+			// AWT components cannot be created without a display, loading the class is all that is possible
+			try {
+				Class.forName(clazz.getName(), true, clazz.getClassLoader());
+			} catch (final Exception e) {
+				System.out.println("forceConstructorInit failed for class: " + clazz.getName());
+				e.printStackTrace();
+			}
+			return;
+		}
+
+		// Swing components must be created on the event dispatch thread
+		if (Component.class.isAssignableFrom(clazz) && !javax.swing.SwingUtilities.isEventDispatchThread()) {
+			try {
+				javax.swing.SwingUtilities.invokeAndWait(() -> forceConstructorInitInternal(clazz));
+			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
+				System.out.println("forceConstructorInit interrupted for class: " + clazz.getName());
+			} catch (final InvocationTargetException e) {
+				System.out.println("forceConstructorInit failed for class: " + clazz.getName());
+				e.printStackTrace();
+			}
+		} else {
+			forceConstructorInitInternal(clazz);
+		}
+	}
+
+	private static void forceConstructorInitInternal(final Class<?> clazz) {
 		try {
 			final Class<?> initClass = Class.forName(clazz.getName(), true, clazz.getClassLoader());
 			final Constructor<?>[] constructors = initClass.getConstructors();
@@ -63,11 +94,16 @@ public class SwingUtilities {
 					}
 					i++;
 				}
-				constructor.newInstance(parameters);
+				final Object instance = constructor.newInstance(parameters);
+				if (instance instanceof Window) {
+					// The dummy window (e.g. a dialog that called pack()) must not keep native resources
+					// and must not prevent the AWT auto shutdown
+					((Window) instance).dispose();
+				}
 			}
 		} catch (@SuppressWarnings("unused") final InvocationTargetException e) {
 			// Something went wrong inside the constructor because of the dummy values.
-			// This doesen't matter, the classloader loaded the class and constructors anyway
+			// This doesn't matter, the classloader loaded the class and constructors anyway
 			// do nothing
 		} catch (final Exception e) {
 			System.out.println("forceConstructorInit failed for class: " + clazz.getName());
@@ -95,22 +131,9 @@ public class SwingUtilities {
 				awtAppClassNameField.setAccessible(true);
 				awtAppClassNameField.set(toolkit, applicationName);
 			} catch (final Exception e) {
+				// A module can only be opened by itself (or via the command line), so there is no programmatic fallback
 				System.err.println("Cannot set AWT WM_CLASS: " + e.getMessage());
-
-				System.err.println("Adding open directive");
-				final Module mod = SwingUtilities.class.getClassLoader().getUnnamedModule();
-				if (mod == Toolkit.class.getModule()) {
-					Toolkit.getDefaultToolkit().getClass().getModule().addOpens("sun.awt.X11", mod);
-				}
-
-				try {
-					final Toolkit toolkit = Toolkit.getDefaultToolkit();
-					final Field awtAppClassNameField = toolkit.getClass().getDeclaredField("awtAppClassName");
-					awtAppClassNameField.setAccessible(true);
-					awtAppClassNameField.set(toolkit, applicationName);
-				} catch (final Exception e2) {
-					System.err.println("Cannot set AWT WM_CLASS: " + e2.getMessage());
-				}
+				System.err.println("Start the application with the java runtime option \"--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED\"");
 			}
 		}
 	}

@@ -213,6 +213,14 @@ public class DropDown extends JPanel {
 	private int selectedMatch = -1;
 
 	/**
+	 * True while "selectedMatch" was chosen by the user (arrow keys, PageUp/Down,
+	 * mouse), false while it is only the automatic preselection made while typing.
+	 * The Delete key only removes a popup entry the user selected himself, so a
+	 * Delete meant for the text never removes an item.
+	 */
+	private boolean selectionByUser = false;
+
+	/**
 	 * Text entered by the user.
 	 */
 	private String userText = "";
@@ -580,7 +588,8 @@ public class DropDown extends JPanel {
 	}
 
 	/**
-	 * Sets the values of the suggestion list. The list is copied.
+	 * Sets the values of the suggestion list. The list is copied, null entries
+	 * are ignored (like {@link #addItem(String)}, which rejects null).
 	 *
 	 * @param values new values, null for none
 	 */
@@ -588,7 +597,11 @@ public class DropDown extends JPanel {
 		items.clear();
 
 		if (values != null) {
-			items.addAll(values);
+			for (final String value : values) {
+				if (value != null) {
+					items.add(value);
+				}
+			}
 		}
 
 		selectedMatch = -1;
@@ -662,6 +675,9 @@ public class DropDown extends JPanel {
 		selectedMatch = -1;
 
 		hidePopup();
+
+		// Update validity and coloring of the current text, like removeItem() does
+		updateMatches(false);
 
 		revalidate();
 	}
@@ -763,6 +779,39 @@ public class DropDown extends JPanel {
 	 */
 	public boolean isValidValue() {
 		return valid;
+	}
+
+	/**
+	 * Returns the item that equals the entered text (respecting
+	 * {@link #isCaseSensitive()}).
+	 *
+	 * <p>
+	 * Unlike {@link #isValidValue()}, which is already true while the entered text
+	 * is only part of some items (e.g. "ap" for "Apple"), this only returns a value
+	 * if the text is a complete item. Use it to read a value that must be one of
+	 * the items.
+	 * </p>
+	 *
+	 * @return the matching item in its original spelling, null if the text is not
+	 *         a complete item
+	 */
+	public String getMatchingItem() {
+		if (userText.isEmpty()) {
+			return null;
+		}
+
+		final String search = normalize(userText);
+		for (final String item : items) {
+			if (item.equals(userText)) {
+				return item;
+			}
+		}
+		for (final String item : items) {
+			if (normalize(item).equals(search)) {
+				return item;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1308,6 +1357,7 @@ public class DropDown extends JPanel {
 
 		matches = new ArrayList<>(items);
 		selectedMatch = -1;
+		selectionByUser = false;
 
 		showPopup();
 	}
@@ -1399,6 +1449,14 @@ public class DropDown extends JPanel {
 			 */
 			userText = userText.isEmpty() ? "" : userText.substring(0, userText.length() - 1);
 			pendingCaretOffset = offset;
+		} else if (tailStart >= 0 && typed.isEmpty() && length > 0 && offset == tailStart) {
+			/*
+			 * Delete right at the start of the gray suggestion tail: the tail is not part
+			 * of the real input, so deleting a character of it must not turn the
+			 * suggestion into the user's text (e.g. "ap" + "ple" -> "Aple"). The input
+			 * stays unchanged.
+			 */
+			pendingCaretOffset = offset;
 		} else {
 			// Any other edit applies to the displayed text, exactly like a native edit would
 			final int start = Math.max(0, Math.min(offset, displayed.length()));
@@ -1416,6 +1474,7 @@ public class DropDown extends JPanel {
 	 */
 	private void processUserInput() {
 		selectedMatch = -1;
+		selectionByUser = false;
 
 		updateMatches(true);
 
@@ -1758,7 +1817,7 @@ public class DropDown extends JPanel {
 	 * popup entry" rather than as normal text editing.
 	 */
 	private boolean isPopupVisibleWithSelection() {
-		return isPopupVisible() && selectedMatch >= 0 && selectedMatch < matches.size();
+		return isPopupVisible() && selectionByUser && selectedMatch >= 0 && selectedMatch < matches.size();
 	}
 
 	/**
@@ -1778,6 +1837,14 @@ public class DropDown extends JPanel {
 		matches.remove(deletedIndex);
 		popupModel.remove(deletedIndex);
 
+		final boolean deletedCurrentValue = deletedItem.equals(userText) && !items.contains(deletedItem);
+		if (deletedCurrentValue) {
+			// The current value does not exist anymore, it must not be returned by getText() as a valid value
+			userText = "";
+			acceptedText = "";
+			setValid(true);
+		}
+
 		if (matches.isEmpty()) {
 			/*
 			 * No items left to show a selection for - fully reset via setText("")
@@ -1796,6 +1863,10 @@ public class DropDown extends JPanel {
 
 		revalidate();
 
+		if (deletedCurrentValue) {
+			fireTextChangedIfNeeded();
+		}
+
 		for (final Consumer<String> listener : itemDeletedListeners) {
 			listener.accept(deletedItem);
 		}
@@ -1809,6 +1880,7 @@ public class DropDown extends JPanel {
 		matches = new ArrayList<>(items);
 
 		selectedMatch = Math.max(0, Math.min(startIndex, matches.size() - 1));
+		selectionByUser = true;
 
 		setValid(true);
 
@@ -1826,6 +1898,8 @@ public class DropDown extends JPanel {
 		if (matches.isEmpty()) {
 			return;
 		}
+
+		selectionByUser = true;
 
 		selectedMatch++;
 
@@ -1846,6 +1920,8 @@ public class DropDown extends JPanel {
 			return;
 		}
 
+		selectionByUser = true;
+
 		selectedMatch--;
 
 		if (selectedMatch < 0) {
@@ -1865,6 +1941,8 @@ public class DropDown extends JPanel {
 		if (matches.isEmpty()) {
 			return;
 		}
+
+		selectionByUser = true;
 
 		final int pageSize = isPopupVisible() ? Math.max(1, popupList.getVisibleRowCount()) : DEFAULT_PAGE_SIZE;
 
@@ -1889,6 +1967,17 @@ public class DropDown extends JPanel {
 	 */
 	private boolean acceptCurrentSuggestion() {
 		if (matches.isEmpty()) {
+			return false;
+		}
+
+		/*
+		 * Nothing to accept if the shown value already is the accepted value and the
+		 * user did not choose another entry since: "matches" is not cleared on
+		 * acceptance, so without this check every further Enter would accept again
+		 * and never reach e.g. a dialog's default button.
+		 */
+		if (!isPopupVisible() && userText.equals(acceptedText)
+				&& (selectedMatch < 0 || selectedMatch >= matches.size() || matches.get(selectedMatch).equals(userText))) {
 			return false;
 		}
 
@@ -2051,6 +2140,12 @@ public class DropDown extends JPanel {
 			final int screenBottom = screenBounds.y + screenBounds.height - screenInsets.bottom;
 			final int screenTop = screenBounds.y + screenInsets.top;
 
+			final int screenRight = screenBounds.x + screenBounds.width - screenInsets.right;
+			final int screenLeft = screenBounds.x + screenInsets.left;
+			if (location.x + width > screenRight) {
+				location.x = Math.max(screenLeft, screenRight - width);
+			}
+
 			if (location.y + height > screenBottom) {
 				final Point topLocation = new Point(0, 0);
 				SwingUtilities.convertPointToScreen(topLocation, this);
@@ -2139,6 +2234,7 @@ public class DropDown extends JPanel {
 		dragInProgress = false;
 		dragSourceIndex = -1;
 		insertionIndex = -1;
+		selectionByUser = false;
 	}
 
 	/**
@@ -2469,6 +2565,7 @@ public class DropDown extends JPanel {
 			// Single press: preview the entry, but don't accept it yet
 			if (index >= 0 && index < matches.size()) {
 				selectedMatch = index;
+				selectionByUser = true;
 
 				renderText(userText, matches.get(selectedMatch));
 			}
@@ -2510,7 +2607,8 @@ public class DropDown extends JPanel {
 			/*
 			 * Passive hover (no button held): highlight the entry under the cursor and
 			 * keep "selectedMatch" in sync, so Delete removes the hovered entry and Enter
-			 * accepts it. Deliberately no live preview in the text field here.
+			 * accepts it. The text field previews the hovered entry, so Enter/Tab always
+			 * accept exactly the value that is shown.
 			 */
 			final int hoveredIndex = popupList.locationToIndex(e.getPoint());
 
@@ -2518,6 +2616,9 @@ public class DropDown extends JPanel {
 				popupList.setSelectedIndex(hoveredIndex);
 
 				selectedMatch = hoveredIndex;
+				selectionByUser = true;
+
+				renderText(userText, matches.get(selectedMatch));
 			}
 		}
 

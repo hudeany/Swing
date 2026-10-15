@@ -76,6 +76,12 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 	protected volatile boolean canceledByUser = false;
 
 	/**
+	 * True after the done signal was received, even if that happened before the
+	 * dialog was shown.
+	 */
+	private volatile boolean doneSignalReceived = false;
+
+	/**
 	 * Creates a progress dialog without a worker. The dialog must then be closed
 	 * by calling {@link #receiveDoneSignal(LocalDateTime, LocalDateTime, long, String, String)}.
 	 *
@@ -152,8 +158,11 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowOpened(final WindowEvent event) {
-				// Started only now, so a fast worker cannot close the dialog before it is shown
-				if (ProgressDialog.this.worker != null) {
+				if (doneSignalReceived) {
+					// Done signal arrived before the dialog was shown: its dispose() was undone by setVisible(true)
+					dispose();
+				} else if (ProgressDialog.this.worker != null) {
+					// Started only now, so a fast worker cannot close the dialog before it is shown
 					if (ProgressDialog.this.worker.getStartTime() == null) {
 						new Thread(ProgressDialog.this.worker).start();
 					} else if (ProgressDialog.this.worker.isDone()) {
@@ -167,6 +176,10 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 			public void windowClosing(final WindowEvent event) {
 				if (!canceledByUser) {
 					askForCancel();
+				} else {
+					// Already canceled, but the worker did not send its done signal (e.g. it ignores the cancel request):
+					// the user must still be able to close the dialog
+					dispose();
 				}
 			}
 		});
@@ -175,7 +188,7 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 
 		setLocationRelativeTo(parent);
 
-		getRootPane().setDefaultButton(buttonClose);
+		// No default button: an Enter key press must not open the cancel question
 	}
 
 	private void askForCancel() {
@@ -259,6 +272,7 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 
 	@Override
 	public void receiveDoneSignal(final LocalDateTime start, final LocalDateTime end, final long itemsDone, final String itemsUnitSign, final String resultText) {
+		doneSignalReceived = true;
 		if (SwingUtilities.isEventDispatchThread()) {
 			dispose();
 		} else {
@@ -291,6 +305,10 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 				}
 				if (getParent() != null && getParent() instanceof WorkerParentSimple) {
 					((WorkerParentSimple) getParent()).cancel();
+				}
+				if (worker == null || worker.isDone() || doneSignalReceived) {
+					// No done signal will follow, the dialog would otherwise stay open forever
+					dispose();
 				}
 			}
 		} else {

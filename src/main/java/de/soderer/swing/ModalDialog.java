@@ -4,6 +4,7 @@ import java.awt.Dialog;
 import java.awt.Window;
 
 import javax.swing.JDialog;
+import javax.swing.WindowConstants;
 
 /**
  * Base class of document modal dialogs that return a value.
@@ -33,6 +34,10 @@ public abstract class ModalDialog<T> extends JDialog {
 	 */
 	public ModalDialog(final Window owner, final String title) {
 		super(owner, title, Dialog.ModalityType.DOCUMENT_MODAL);
+
+		// JDialog default is HIDE_ON_CLOSE: a dialog closed via the window decoration would keep its native resources
+		// and prevent the AWT auto shutdown (JVM would not exit after the last window was closed)
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 	}
 
 	/**

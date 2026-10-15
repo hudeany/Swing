@@ -6,6 +6,9 @@ import java.awt.Font;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -20,10 +23,10 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import de.soderer.utilities.Utilities;
 
 import de.soderer.utilities.Credentials;
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.Utilities;
 
 /**
  * Modal dialog asking for a username and/or a password.
@@ -31,13 +34,19 @@ import de.soderer.utilities.LangResources;
  * <p>
  * {@link #open()} returns the entered credentials, or null if the dialog was
  * canceled. The OK button is only enabled while a username is entered (if a
- * username is requested). An optional checkbox lets the user choose to remember
- * the credentials (see {@link #isRememberCredentials()}), and an optional "no
- * password" button returns the credentials without password.
+ * username is requested) and, if a password confirmation is requested, while
+ * both password fields are equal. An optional checkbox lets the user choose to
+ * remember the credentials (see {@link #isRememberCredentials()}), and an
+ * optional "no password" button returns the credentials without password.
+ * </p>
+ *
+ * <p>
+ * The password confirmation field uses the language resource key
+ * {@code passwordConfirmation} for its label.
  * </p>
  */
 public class CredentialsDialog extends ModalDialog<Credentials> {
-	private static final long serialVersionUID = 2020023796052296409L;
+	private static final long serialVersionUID = -3159468071935512867L;
 
 	/** Text shown above the input fields, may be blank */
 	private final String text;
@@ -66,10 +75,13 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	/** Text of the "remember credentials" checkbox, blank for no checkbox */
 	private String rememberCredentialsText = null;
 
+	/** Whether the password must be entered twice (e.g. when a new password is set) */
+	private boolean passwordConfirmation = false;
+
 	/** Content panel, rebuilt whenever an option affecting the layout changes */
 	private JPanel panel;
 
-	/** OK button, only enabled while a username is entered (if a username is requested) */
+	/** OK button, only enabled while the input is complete */
 	private JButton okButton;
 
 	/** Whether the dialog asks for a username */
@@ -83,6 +95,9 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 
 	/** Currently entered password, null if no password is requested (transient: never serialized) */
 	private transient char[] password = null;
+
+	/** Currently entered password confirmation, null if no confirmation is requested (transient: never serialized) */
+	private transient char[] passwordConfirmationValue = null;
 
 	/** Input field of the username, null if no username is requested */
 	private JTextField userField;
@@ -135,10 +150,32 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 
 		setResizable(false);
 
-		createComponents(this);
+		createComponents();
+
+		// requestFocus() before the dialog is visible has no effect, so focus the first input field once it is shown
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowOpened(final WindowEvent event) {
+				if (userField != null) {
+					userField.requestFocusInWindow();
+				} else if (passwordField != null) {
+					passwordField.requestFocusInWindow();
+				}
+			}
+		});
 	}
 
-	private void createComponents(@SuppressWarnings("unused") final CredentialsDialog credentialsDialog) {
+	private void createComponents() {
+		if (panel != null) {
+			remove(panel);
+		}
+
+		// Old password copies of a previous build must not stay in memory
+		wipe(password);
+		wipe(passwordConfirmationValue);
+		userField = null;
+		passwordField = null;
+
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
@@ -147,10 +184,11 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 		if (Utilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			final Font f = textField.getFont();
-			final Font f2 = new Font("Arial", f.getStyle(), f.getSize());
-			textField.setFont(f2);
+			textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));
 			textField.setText(text);
 			textField.setEditable(false);
+			// Not focusable: it would otherwise get the initial focus and swallow the Enter key
+			textField.setFocusable(false);
 			textField.setBackground(panel.getBackground());
 
 			final JScrollPane textScrollpane = new JScrollPane(textField);
@@ -173,20 +211,21 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 			userPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			final JLabel userLabel = new JLabel(text_Username);
 			userPanel.add(userLabel);
-			userField = new JTextField();
-			userField.setPreferredSize(new Dimension(200, userField.getPreferredSize().height));
-			userField.setText("");
+			final JTextField newUserField = new JTextField();
+			newUserField.setPreferredSize(new Dimension(200, newUserField.getPreferredSize().height));
+			newUserField.setText("");
 			username = "";
 			// A DocumentListener also covers input that is not typed, like pasting via mouse or drag and drop
-			userField.getDocument().addDocumentListener(new FieldChangeListener() {
+			newUserField.getDocument().addDocumentListener(new FieldChangeListener() {
 				@Override
 				protected void fieldChanged() {
-					username = userField.getText();
+					username = newUserField.getText();
 					checkButtonStatus();
 				}
 			});
-			userPanel.add(userField);
+			userPanel.add(newUserField);
 			panel.add(userPanel);
+			userField = newUserField;
 		}
 
 		if (aquirePassword) {
@@ -195,20 +234,42 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 			passwordPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			final JLabel passwordLabel = new JLabel(text_Password);
 			passwordPanel.add(passwordLabel);
-			passwordField = new JPasswordField();
-			passwordField.setPreferredSize(new Dimension(200, passwordField.getPreferredSize().height));
-			passwordField.setText("");
-			password = "".toCharArray();
-			passwordField.getDocument().addDocumentListener(new FieldChangeListener() {
+			final JPasswordField newPasswordField = new JPasswordField();
+			newPasswordField.setPreferredSize(new Dimension(200, newPasswordField.getPreferredSize().height));
+			password = new char[0];
+			newPasswordField.getDocument().addDocumentListener(new FieldChangeListener() {
 				@Override
 				protected void fieldChanged() {
-					// getPassword() avoids an immutable String copy of the password
-					password = passwordField.getPassword();
+					// getPassword() avoids an immutable String copy of the password, the previous copy is wiped
+					wipe(password);
+					password = newPasswordField.getPassword();
 					checkButtonStatus();
 				}
 			});
-			passwordPanel.add(passwordField);
+			passwordPanel.add(newPasswordField);
 			panel.add(passwordPanel);
+			passwordField = newPasswordField;
+
+			if (passwordConfirmation) {
+				final JPanel confirmationPanel = new JPanel();
+				confirmationPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+				confirmationPanel.add(new JLabel(LangResources.get("passwordConfirmation")));
+				final JPasswordField confirmationField = new JPasswordField();
+				confirmationField.setPreferredSize(new Dimension(200, confirmationField.getPreferredSize().height));
+				passwordConfirmationValue = new char[0];
+				confirmationField.getDocument().addDocumentListener(new FieldChangeListener() {
+					@Override
+					protected void fieldChanged() {
+						wipe(passwordConfirmationValue);
+						passwordConfirmationValue = confirmationField.getPassword();
+						checkButtonStatus();
+					}
+				});
+				confirmationPanel.add(confirmationField);
+				panel.add(confirmationPanel);
+			} else {
+				passwordConfirmationValue = null;
+			}
 		}
 
 		if (Utilities.isNotBlank(rememberCredentialsText)) {
@@ -280,29 +341,42 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 
 		setLocationRelativeTo(getOwner());
 
-		if (userField != null) {
-			userField.requestFocus();
-		} else if (passwordField != null) {
-			passwordField.requestFocus();
-		}
-
 		checkButtonStatus();
 	}
 
 	private void checkButtonStatus() {
-		okButton.setEnabled(!aquireUsername || Utilities.isNotEmpty(username));
+		boolean enabled = !aquireUsername || Utilities.isNotEmpty(username);
+		if (aquirePassword && passwordConfirmation) {
+			enabled = enabled && Arrays.equals(password, passwordConfirmationValue);
+		}
+		okButton.setEnabled(enabled);
+	}
+
+	private static void wipe(final char[] value) {
+		if (value != null) {
+			Arrays.fill(value, '\0');
+		}
 	}
 
 	/**
 	 * Sets the text of a "remember credentials" checkbox.
 	 *
 	 * @param rememberCredentialsText text of the checkbox, blank for no checkbox
+	 */
+	public void setRememberCredentialsText(final String rememberCredentialsText) {
+		this.rememberCredentialsText = rememberCredentialsText;
+		createComponents();
+	}
+
+	/**
+	 * Sets the text of a "remember credentials" checkbox and returns this dialog
+	 * for chaining.
+	 *
+	 * @param rememberCredentialsTextValue text of the checkbox, blank for no checkbox
 	 * @return this dialog for chaining
 	 */
-	public CredentialsDialog setRememberCredentialsText(final String rememberCredentialsText) {
-		this.rememberCredentialsText = rememberCredentialsText;
-		remove(panel);
-		createComponents(this);
+	public CredentialsDialog withRememberCredentialsText(final String rememberCredentialsTextValue) {
+		setRememberCredentialsText(rememberCredentialsTextValue);
 		return this;
 	}
 
@@ -310,12 +384,45 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	 * Sets the initial status of the "remember credentials" checkbox.
 	 *
 	 * @param rememberCredentials true to check the checkbox initially
+	 */
+	public void setRememberCredentials(final boolean rememberCredentials) {
+		this.rememberCredentials = rememberCredentials;
+		createComponents();
+	}
+
+	/**
+	 * Sets the initial status of the "remember credentials" checkbox and returns
+	 * this dialog for chaining.
+	 *
+	 * @param rememberCredentialsValue true to check the checkbox initially
 	 * @return this dialog for chaining
 	 */
-	public CredentialsDialog setRememberCredentials(final boolean rememberCredentials) {
-		this.rememberCredentials = rememberCredentials;
-		remove(panel);
-		createComponents(this);
+	public CredentialsDialog withRememberCredentials(final boolean rememberCredentialsValue) {
+		setRememberCredentials(rememberCredentialsValue);
+		return this;
+	}
+
+	/**
+	 * Requests the password to be entered twice. The OK button is only enabled
+	 * while both entries are equal. Use this whenever a new password is set, so a
+	 * typo cannot lock the user out.
+	 *
+	 * @param passwordConfirmation true to show a password confirmation field
+	 */
+	public void setPasswordConfirmation(final boolean passwordConfirmation) {
+		this.passwordConfirmation = passwordConfirmation;
+		createComponents();
+	}
+
+	/**
+	 * Requests the password to be entered twice and returns this dialog for
+	 * chaining.
+	 *
+	 * @param passwordConfirmationParam true to show a password confirmation field
+	 * @return this dialog for chaining
+	 */
+	public CredentialsDialog withPasswordConfirmation(final boolean passwordConfirmationParam) {
+		setPasswordConfirmation(passwordConfirmationParam);
 		return this;
 	}
 
@@ -330,15 +437,17 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	}
 
 	/**
-	 * Returns the currently entered credentials.
+	 * Returns the currently entered credentials. The password is a copy, the
+	 * caller may wipe it after use.
 	 *
 	 * @return credentials with the requested parts (username and/or password),
 	 *         null if neither username nor password is requested
 	 */
 	public Credentials getCredentials() {
+		final char[] passwordCopy = password == null ? null : Arrays.copyOf(password, password.length);
 		if (aquireUsername && aquirePassword) {
 			if (username != null) {
-				return new Credentials(username, password);
+				return new Credentials(username, passwordCopy);
 			} else {
 				return null;
 			}
@@ -349,7 +458,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 				return null;
 			}
 		} else if (aquirePassword) {
-			return new Credentials(password);
+			return new Credentials(passwordCopy);
 		} else {
 			return null;
 		}
@@ -380,9 +489,24 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 		enableNoPassword = enable;
 		enableNoPasswordButtonText = enableNoPasswordButtonTextParam;
 		// Rebuild the components, otherwise the button would only appear if another setter is called afterwards
-		remove(panel);
-		createComponents(this);
+		createComponents();
 		return this;
+	}
+
+	/**
+	 * Wipes the entered passwords from memory when the dialog is closed. The
+	 * credentials returned by {@link #open()} or {@link #getCredentials()} hold
+	 * their own copy and are not affected.
+	 */
+	@Override
+	public void dispose() {
+		if (returnValue == null && passwordField != null) {
+			// Canceled: nothing needs the entered password anymore
+			wipe(password);
+			password = new char[0];
+		}
+		wipe(passwordConfirmationValue);
+		super.dispose();
 	}
 
 	/**

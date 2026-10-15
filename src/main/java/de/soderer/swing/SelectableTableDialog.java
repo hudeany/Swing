@@ -29,7 +29,7 @@ import de.soderer.utilities.Utilities;
  * </p>
  */
 public class SelectableTableDialog extends ModalDialog<Boolean> {
-	private static final long serialVersionUID = -718203702968699038L;
+	private static final long serialVersionUID = 5520194410276683215L;
 
 	/** Table with a checkbox column in front of the value columns */
 	private JTable table;
@@ -110,6 +110,12 @@ public class SelectableTableDialog extends ModalDialog<Boolean> {
 					return String.class;
 				}
 			}
+
+			@Override
+			public boolean isCellEditable(final int rowIndex, final int columnIndex) {
+				// Only the checkbox column is editable, the values must be returned unchanged
+				return columnIndex == 0;
+			}
 		};
 		table = new JTable(tableModel);
 		table.setBackground(Color.LIGHT_GRAY);
@@ -174,6 +180,10 @@ public class SelectableTableDialog extends ModalDialog<Boolean> {
 			public void actionPerformed(final ActionEvent event) {
 				// Read the model by model indexes (column 0 is the checkbox, column i + 1 is header i):
 				// view column indexes differ from the model indexes after the user reordered columns
+				if (table.isEditing() && !table.getCellEditor().stopCellEditing()) {
+					table.getCellEditor().cancelCellEditing();
+				}
+
 				selectedItems = new ArrayList<>();
 				for (int rowIndex = 0; rowIndex < tableModel.getRowCount(); rowIndex++) {
 					if (Boolean.TRUE.equals(tableModel.getValueAt(rowIndex, 0))) {

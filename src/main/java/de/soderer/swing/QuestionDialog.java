@@ -79,12 +79,14 @@ public class QuestionDialog extends ModalDialog<Integer> {
 
 		final JTextArea textField = new JTextArea();
 
+		// Proportional dialog font instead of the monospaced JTextArea default ("Arial" is often missing on Linux)
 		final Font f = textField.getFont();
-		final Font f2 = new Font("Arial", f.getStyle(), f.getSize());
-		textField.setFont(f2);
+		textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));
 
 		textField.setText(text);
 		textField.setEditable(false);
+		// Not focusable, so the initial focus is on a button and Enter triggers the default button
+		textField.setFocusable(false);
 		if (backgroundcolor != null) {
 			textField.setBackground(backgroundcolor);
 		} else {
@@ -187,12 +189,22 @@ public class QuestionDialog extends ModalDialog<Integer> {
 	 * {@link SwingColor#LightRed} for error messages.
 	 *
 	 * @param backgroundcolor background color, null for the panel's background
-	 * @return this dialog for chaining
 	 */
-	public QuestionDialog setBackgroundColor(final Color backgroundcolor) {
+	public void setBackgroundColor(final Color backgroundcolor) {
 		this.backgroundcolor = backgroundcolor;
 		remove(panel);
 		createComponents(this);
+	}
+
+	/**
+	 * Sets the background color of the text area and returns this dialog for
+	 * chaining.
+	 *
+	 * @param backgroundcolorValue background color, null for the panel's background
+	 * @return this dialog for chaining
+	 */
+	public QuestionDialog withBackgroundColor(final Color backgroundcolorValue) {
+		setBackgroundColor(backgroundcolorValue);
 		return this;
 	}
 
@@ -200,12 +212,22 @@ public class QuestionDialog extends ModalDialog<Integer> {
 	 * Sets the text of an additional checkbox shown below the text.
 	 *
 	 * @param checkboxText text of the checkbox, blank for no checkbox
-	 * @return this dialog for chaining
 	 */
-	public QuestionDialog setCheckboxText(final String checkboxText) {
+	public void setCheckboxText(final String checkboxText) {
 		this.checkboxText = checkboxText;
 		remove(panel);
 		createComponents(this);
+	}
+
+	/**
+	 * Sets the text of an additional checkbox and returns this dialog for
+	 * chaining.
+	 *
+	 * @param checkboxTextValue text of the checkbox, blank for no checkbox
+	 * @return this dialog for chaining
+	 */
+	public QuestionDialog withCheckboxText(final String checkboxTextValue) {
+		setCheckboxText(checkboxTextValue);
 		return this;
 	}
 
@@ -213,12 +235,22 @@ public class QuestionDialog extends ModalDialog<Integer> {
 	 * Sets the initial status of the checkbox.
 	 *
 	 * @param checkboxStatus true to check the checkbox initially
-	 * @return this dialog for chaining
 	 */
-	public QuestionDialog setCheckboxStatus(final boolean checkboxStatus) {
+	public void setCheckboxStatus(final boolean checkboxStatus) {
 		this.checkboxStatus = checkboxStatus;
 		remove(panel);
 		createComponents(this);
+	}
+
+	/**
+	 * Sets the initial status of the checkbox and returns this dialog for
+	 * chaining.
+	 *
+	 * @param checkboxStatusValue true to check the checkbox initially
+	 * @return this dialog for chaining
+	 */
+	public QuestionDialog withCheckboxStatus(final boolean checkboxStatusValue) {
+		setCheckboxStatus(checkboxStatusValue);
 		return this;
 	}
 

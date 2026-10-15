@@ -6,8 +6,8 @@ import java.awt.Font;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
@@ -18,9 +18,16 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import de.soderer.utilities.Utilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.DocumentFilter;
 
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.Utilities;
 
 /**
  * Modal dialog with a text and a single input field.
@@ -28,8 +35,8 @@ import de.soderer.utilities.LangResources;
  * <p>
  * {@link #open()} returns the entered value, or null if the dialog was
  * canceled. The OK button is only enabled while the input is not empty. An
- * optional input pattern rejects typed characters that would make the input
- * not match the pattern.
+ * optional input pattern rejects every edit (typing, pasting, drag&amp;drop)
+ * that would make the input not match the pattern.
  * </p>
  */
 public class SimpleInputDialog extends ModalDialog<String> {
@@ -47,16 +54,10 @@ public class SimpleInputDialog extends ModalDialog<String> {
 	/** OK button, only enabled while the input is not empty */
 	private JButton okButton;
 
-	/** Last input matching inputPattern, restored when a typed character breaks the pattern */
-	private String currentInputText = "";
-
-	/** Caret position at the time an invalid character was typed */
-	private int currentPosition = 0;
-
 	/** Pattern the whole input must match, null for no restriction */
 	private Pattern inputPattern = null;
 
-	/** Suppresses the input check while the field is reset programmatically */
+	/** Suppresses the pattern check while the field is filled programmatically */
 	private boolean isTechnicalChange = false;
 
 	/** Initial value of the input field, null for an empty field */
@@ -81,24 +82,43 @@ public class SimpleInputDialog extends ModalDialog<String> {
 
 		createComponents();
 
+		// requestFocus() before the dialog is visible has no effect, so focus the input field once it is shown
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowOpened(final WindowEvent event) {
+				inputField.requestFocusInWindow();
+			}
+		});
+
 		returnValue = null;
 	}
 
 	/**
-	 * Sets the initial value of the input field.
+	 * Sets the initial value of the input field. The value is not checked against
+	 * the input pattern.
 	 *
 	 * @param defaultText initial value, may be null for an empty field
-	 * @return this dialog for chaining
 	 */
-	public SimpleInputDialog setDefaultText(final String defaultText) {
+	public void setDefaultText(final String defaultText) {
 		this.defaultText = defaultText;
 		createComponents();
+	}
+
+	/**
+	 * Sets the initial value of the input field and returns this dialog for
+	 * chaining.
+	 *
+	 * @param defaultTextValue initial value, may be null for an empty field
+	 * @return this dialog for chaining
+	 */
+	public SimpleInputDialog withDefaultText(final String defaultTextValue) {
+		setDefaultText(defaultTextValue);
 		return this;
 	}
 
 	/**
-	 * Sets a regular expression the whole input must match while typing. Typed
-	 * characters that make the input not match are removed again.
+	 * Sets a regular expression the whole input must match while editing. Edits
+	 * that make the input not match are rejected.
 	 *
 	 * @param patternString regular expression, blank for no restriction
 	 */
@@ -108,6 +128,18 @@ public class SimpleInputDialog extends ModalDialog<String> {
 		} else {
 			inputPattern = Pattern.compile(patternString);
 		}
+	}
+
+	/**
+	 * Sets a regular expression the whole input must match while editing and
+	 * returns this dialog for chaining.
+	 *
+	 * @param patternString regular expression, blank for no restriction
+	 * @return this dialog for chaining
+	 */
+	public SimpleInputDialog withInputPattern(final String patternString) {
+		setInputPattern(patternString);
+		return this;
 	}
 
 	/**
@@ -122,10 +154,11 @@ public class SimpleInputDialog extends ModalDialog<String> {
 		if (Utilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			final Font f = textField.getFont();
-			final Font f2 = new Font("Arial", f.getStyle(), f.getSize());
-			textField.setFont(f2);
+			textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));
 			textField.setText(text);
 			textField.setEditable(false);
+			// Not focusable: it would otherwise get the initial focus and swallow the Enter key
+			textField.setFocusable(false);
 			textField.setBackground(panel.getBackground());
 
 			textScrollpane = new JScrollPane(textField);
@@ -146,37 +179,38 @@ public class SimpleInputDialog extends ModalDialog<String> {
 
 		inputField = new JTextField();
 		final Font f = inputField.getFont();
-		final Font f2 = new Font("Arial", f.getStyle(), f.getSize() + 2);
-		inputField.setFont(f2);
+		inputField.setFont(f.deriveFont(f.getSize2D() + 2));
 		inputField.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		inputField.setText(defaultText != null ? defaultText : "");
-		// The last valid input must be the default text, otherwise an invalid keystroke would revert the field to the empty text
-		currentInputText = inputField.getText();
-		inputField.addKeyListener(new KeyAdapter() {
+
+		final Document document = inputField.getDocument();
+		if (document instanceof AbstractDocument) {
+			// A DocumentFilter also covers pasting, drag&drop and key repeat, unlike a KeyListener
+			((AbstractDocument) document).setDocumentFilter(new PatternFilter());
+		}
+		document.addDocumentListener(new DocumentListener() {
 			@Override
-			public void keyReleased(final KeyEvent event) {
-				if (!isTechnicalChange) {
-					if (inputPattern == null || inputPattern.matcher(inputField.getText()).matches()) {
-						currentInputText = inputField.getText();
-					} else {
-						// Remove the invalid input character
-						currentPosition = inputField.getCaretPosition();
-						isTechnicalChange = true;
-						inputField.setText(currentInputText);
-						inputField.setSelectionStart(Math.min(currentInputText.length(), Math.max(0, currentPosition - 1)));
-						inputField.setSelectionEnd(Math.min(currentInputText.length(), Math.max(0, currentPosition - 1)));
-						isTechnicalChange = false;
-					}
-
-					if (event.getKeyChar() == '\n') {
-						returnValue = inputField.getText();
-						dispose();
-					}
-				}
-
+			public void insertUpdate(final DocumentEvent event) {
 				checkButtonStatus();
 			}
+
+			@Override
+			public void removeUpdate(final DocumentEvent event) {
+				checkButtonStatus();
+			}
+
+			@Override
+			public void changedUpdate(final DocumentEvent event) {
+				// Attribute changes only, no text change
+			}
 		});
+
+		isTechnicalChange = true;
+		try {
+			inputField.setText(defaultText != null ? defaultText : "");
+		} finally {
+			isTechnicalChange = false;
+		}
+
 		final JPanel textPanel = new JPanel();
 		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.LINE_AXIS));
 
@@ -191,7 +225,7 @@ public class SimpleInputDialog extends ModalDialog<String> {
 		final JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
 
-		// ok Button
+		// ok Button (also triggered by Enter as default button, but only while it is enabled)
 		okButton = new JButton(LangResources.get("ok"));
 		okButton.addActionListener(new ActionListener() {
 			@Override
@@ -233,12 +267,44 @@ public class SimpleInputDialog extends ModalDialog<String> {
 
 		setLocationRelativeTo(getOwner());
 
-		inputField.requestFocus();
-
 		checkButtonStatus();
 	}
 
 	private void checkButtonStatus() {
-		okButton.setEnabled(Utilities.isNotEmpty(inputField.getText()));
+		if (okButton != null) {
+			okButton.setEnabled(Utilities.isNotEmpty(inputField.getText()));
+		}
+	}
+
+	/**
+	 * Rejects every edit whose result would not match the input pattern.
+	 */
+	private final class PatternFilter extends DocumentFilter {
+		@Override
+		public void insertString(final FilterBypass filterBypass, final int offset, final String string, final AttributeSet attributes) throws BadLocationException {
+			replace(filterBypass, offset, 0, string, attributes);
+		}
+
+		@Override
+		public void remove(final FilterBypass filterBypass, final int offset, final int length) throws BadLocationException {
+			replace(filterBypass, offset, length, "", null);
+		}
+
+		@Override
+		public void replace(final FilterBypass filterBypass, final int offset, final int length, final String newText, final AttributeSet attributes) throws BadLocationException {
+			if (isTechnicalChange || inputPattern == null) {
+				filterBypass.replace(offset, length, newText, attributes);
+				return;
+			}
+
+			final Document document = filterBypass.getDocument();
+			final String currentText = document.getText(0, document.getLength());
+			final String resultText = currentText.substring(0, offset) + (newText == null ? "" : newText) + currentText.substring(offset + length);
+			if (inputPattern.matcher(resultText).matches()) {
+				filterBypass.replace(offset, length, newText, attributes);
+			} else {
+				inputField.getToolkit().beep();
+			}
+		}
 	}
 }

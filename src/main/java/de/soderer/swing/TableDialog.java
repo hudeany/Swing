@@ -90,6 +90,12 @@ public class TableDialog extends ModalDialog<Boolean> {
 			public Class<?> getColumnClass(final int columnIndex) {
 				return String.class;
 			}
+
+			@Override
+			public boolean isCellEditable(final int rowIndex, final int columnIndex) {
+				// Read-only table
+				return false;
+			}
 		};
 		table = new JTable(tableModel);
 		table.setBackground(Color.LIGHT_GRAY);
@@ -127,6 +133,8 @@ public class TableDialog extends ModalDialog<Boolean> {
 
 		pack();
 
-		setLocationRelativeTo(parent);getRootPane().setDefaultButton(closeButton);
+		setLocationRelativeTo(parent);
+
+		getRootPane().setDefaultButton(closeButton);
 	}
 }

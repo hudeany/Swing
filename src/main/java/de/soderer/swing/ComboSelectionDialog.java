@@ -31,8 +31,8 @@ import de.soderer.utilities.Utilities;
  * </p>
  *
  * <p>
- * {@link #open()} returns the selected value, or {@code null} if the dialog
- * was canceled.
+ * {@link #open()} returns the selected value (always one of the items), or
+ * {@code null} if the dialog was canceled.
  * </p>
  */
 public class ComboSelectionDialog extends ModalDialog<String> {
@@ -121,8 +121,11 @@ public class ComboSelectionDialog extends ModalDialog<String> {
 
 		okButton = new JButton(LangResources.get("ok"));
 		okButton.addActionListener(e -> {
-			returnValue = dropDown.getText();
-			dispose();
+			// Only a complete item, never a partial text like "ap" that merely matches some items
+			returnValue = dropDown.getMatchingItem();
+			if (returnValue != null) {
+				dispose();
+			}
 		});
 		buttonPanel.add(okButton);
 
@@ -197,6 +200,7 @@ public class ComboSelectionDialog extends ModalDialog<String> {
 	}
 
 	private void checkButtonStatus() {
-		okButton.setEnabled(dropDown.isValidValue() && Utilities.isNotEmpty(dropDown.getText()));
+		// isValidValue() is already true for a partial text, so the text must be a complete item
+		okButton.setEnabled(dropDown.isValidValue() && dropDown.getMatchingItem() != null);
 	}
 }

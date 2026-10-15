@@ -1,12 +1,15 @@
 package de.soderer.swing;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 
 import javax.swing.JFrame;
 
 import de.soderer.utilities.Credentials;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.SecureDataStore;
+import de.soderer.utilities.WrongPasswordException;
 
 /**
  * Base class of GUI applications that keep sensitive values (e.g. credentials)
@@ -15,7 +18,9 @@ import de.soderer.utilities.SecureDataStore;
  * <p>
  * The keystore password is asked for via a {@link CredentialsDialog} when
  * needed (an empty password is tried first) and may be kept in memory for the
- * lifetime of the application if the user chooses so.
+ * lifetime of the application if the user chooses so. An existing keystore is
+ * always saved with the password it was opened with; a new keystore asks for
+ * its password twice, so a typo cannot lock the user out.
  * </p>
  */
 public class SecureDataGuiApplication extends JFrame {
@@ -71,125 +76,173 @@ public class SecureDataGuiApplication extends JFrame {
 	 *         does not contain the entry
 	 */
 	protected <T> T getKeystoreValue(final Class<T> classType, final String entryName) {
-		final SecureDataStore secureDataStore = openKeystore();
-		return secureDataStore != null ? secureDataStore.getEntry(classType, entryName) : null;
+		final OpenedKeystore openedKeystore = openKeystore();
+		if (openedKeystore == null) {
+			return null;
+		}
+
+		try {
+			return openedKeystore.keystore.getEntry(classType, entryName);
+		} finally {
+			wipe(openedKeystore.password);
+		}
 	}
 
 	/**
 	 * Stores a value in the keystore, creating the keystore file if it does not
-	 * exist yet. Asks the user for the keystore password to save with. Nothing is
-	 * stored if the existing keystore cannot be opened or the user cancels the
-	 * password dialog.
+	 * exist yet.
+	 *
+	 * <p>
+	 * An existing keystore is saved with the password it was opened with, so a
+	 * typo cannot re-encrypt it with an unknown password. For a new keystore the
+	 * user enters the password twice. Nothing is stored if the existing keystore
+	 * cannot be opened or the user cancels the password dialog.
+	 * </p>
 	 *
 	 * @param entryName name of the entry
 	 * @param value value to store
+	 * @return true if the value was stored, false if the user canceled or the
+	 *         keystore could not be opened
 	 * @throws Exception if the keystore cannot be saved
 	 */
-	protected void saveKeyStoreValue(final String entryName, final Object value) throws Exception {
-		if (keystoreFile != null) {
-			SecureDataStore secureDataStore = null;
+	protected boolean saveKeyStoreValue(final String entryName, final Object value) throws Exception {
+		if (keystoreFile == null) {
+			return false;
+		}
 
-			if (keystoreExists()) {
-				secureDataStore = openKeystore();
-				if (secureDataStore == null) {
-					// Keystore could not be opened (e.g. password dialog canceled): a new keystore would overwrite all existing entries
-					return;
-				}
-			} else if (keystoreFile.getAbsoluteFile().getParentFile() != null && !keystoreFile.getAbsoluteFile().getParentFile().exists()) {
-				keystoreFile.getAbsoluteFile().getParentFile().mkdirs();
+		if (keystoreExists()) {
+			final OpenedKeystore openedKeystore = openKeystore();
+			if (openedKeystore == null) {
+				// Keystore could not be opened (e.g. password dialog canceled): a new keystore would overwrite all existing entries
+				return false;
 			}
 
-			if (secureDataStore != null) {
+			try {
+				openedKeystore.keystore.addEntry(entryName, value);
+				openedKeystore.keystore.save(keystoreFile, openedKeystore.password);
+				return true;
+			} finally {
+				wipe(openedKeystore.password);
+			}
+		} else {
+			final File parentDirectory = keystoreFile.getAbsoluteFile().getParentFile();
+			if (parentDirectory != null && !parentDirectory.exists() && !parentDirectory.mkdirs()) {
+				throw new IOException("Cannot create directory for keystore: " + parentDirectory.getAbsolutePath());
+			}
+
+			final CredentialsDialog keystoreCredentialsDialog = new CredentialsDialog(this, LangResources.get("window_title"), LangResources.get("enterKeystorePassword"), false, true);
+			keystoreCredentialsDialog.setRememberCredentialsText(LangResources.get("keepPasswordInMemory"));
+			// New keystore: the password must be entered twice
+			keystoreCredentialsDialog.setPasswordConfirmation(true);
+			final Credentials credentials = keystoreCredentialsDialog.open();
+			if (credentials == null) {
+				return false;
+			}
+
+			final char[] keystorePassword = credentials.getPassword() == null ? new char[0] : credentials.getPassword();
+			try {
+				final SecureDataStore secureDataStore = new SecureDataStore();
 				secureDataStore.addEntry(entryName, value);
-				final CredentialsDialog keystoreCredentialsDialog = new CredentialsDialog(this, "Secure data", LangResources.get("enterKeystorePassword"), false, true);
-				keystoreCredentialsDialog.setRememberCredentialsText(LangResources.get("keepPasswordInMemory"));
-				final Credentials credentials = keystoreCredentialsDialog.open();
-				if (credentials != null) {
-					final char[] keystorePassword = credentials.getPassword();
-					secureDataStore.save(keystoreFile, keystorePassword);
-					if (keystoreCredentialsDialog.isRememberCredentials()) {
-						rememberedKeystorePassword = keystorePassword;
-					}
+				secureDataStore.save(keystoreFile, keystorePassword);
+				if (keystoreCredentialsDialog.isRememberCredentials()) {
+					rememberPassword(keystorePassword);
 				}
-			} else {
-				secureDataStore = new SecureDataStore();
-				secureDataStore.addEntry(entryName, value);
-				final CredentialsDialog keystoreCredentialsDialog = new CredentialsDialog(this, "Secure data", LangResources.get("enterKeystorePassword"), false, true);
-				keystoreCredentialsDialog.setRememberCredentialsText(LangResources.get("keepPasswordInMemory"));
-				final Credentials credentials = keystoreCredentialsDialog.open();
-				if (credentials != null) {
-					final char[] keystorePassword = credentials.getPassword();
-					secureDataStore.save(keystoreFile, keystorePassword);
-					if (keystoreCredentialsDialog.isRememberCredentials()) {
-						rememberedKeystorePassword = keystorePassword;
-					}
-				}
+				return true;
+			} finally {
+				wipe(keystorePassword);
 			}
 		}
 	}
 
-	private SecureDataStore openKeystore() {
-		if (keystoreFile != null && keystoreFile.exists()) {
-			SecureDataStore keystore = null;
-			char[] keystorePassword;
-
-			if (rememberedKeystorePassword != null) {
-				// try to use remembered keystore password
-				try {
-					keystorePassword = rememberedKeystorePassword;
-					keystore = new SecureDataStore();
-					keystore.load(keystoreFile, keystorePassword);
-				} catch (@SuppressWarnings("unused") final Exception e) {
-					keystorePassword = null;
-					keystore = null;
-					rememberedKeystorePassword = null;
-				}
-			} else {
-				// try to use empty keystore password
-				try {
-					keystorePassword = "".toCharArray();
-					keystore = new SecureDataStore();
-					keystore.load(keystoreFile, keystorePassword);
-				} catch (@SuppressWarnings("unused") final Exception e) {
-					keystorePassword = null;
-					keystore = null;
-				}
-			}
-
-			if (keystorePassword == null && keystore == null) {
-				boolean retry = true;
-				while (retry) {
-					final CredentialsDialog keystoreCredentialsDialog = new CredentialsDialog(this, LangResources.get("window_title"), LangResources.get("enterKeystorePassword"), false, true);
-					keystoreCredentialsDialog.setRememberCredentialsText(LangResources.get("keepPasswordInMemory"));
-					final Credentials credentials = keystoreCredentialsDialog.open();
-					if (credentials == null) {
-						retry = false;
-					} else {
-						keystorePassword = credentials.getPassword();
-
-						// try to use this keystore password
-						try {
-							keystore = new SecureDataStore();
-							keystore.load(keystoreFile, keystorePassword);
-
-							if (keystoreCredentialsDialog.isRememberCredentials()) {
-								rememberedKeystorePassword = keystorePassword;
-							}
-
-							retry = false;
-						} catch (@SuppressWarnings("unused") final Exception e) {
-							keystorePassword = null;
-							keystore = null;
-							rememberedKeystorePassword = null;
-							retry = true;
-						}
-					}
-				}
-			}
-
-			return keystore;
-		} else {
+	/**
+	 * Opens the keystore: with the remembered password, with an empty password or
+	 * with a password entered by the user.
+	 *
+	 * @return the opened keystore with a copy of its password (to be wiped by the
+	 *         caller), null if the keystore does not exist, the user canceled or
+	 *         the keystore could not be read
+	 */
+	private OpenedKeystore openKeystore() {
+		if (keystoreFile == null || !keystoreFile.exists()) {
 			return null;
+		}
+
+		// Try the remembered password, otherwise an empty password
+		final char[] firstTryPassword = rememberedKeystorePassword != null ? Arrays.copyOf(rememberedKeystorePassword, rememberedKeystorePassword.length) : new char[0];
+		try {
+			final SecureDataStore keystore = new SecureDataStore();
+			keystore.load(keystoreFile, firstTryPassword);
+			return new OpenedKeystore(keystore, firstTryPassword);
+		} catch (@SuppressWarnings("unused") final WrongPasswordException e) {
+			wipe(firstTryPassword);
+			if (rememberedKeystorePassword != null) {
+				// Keystore was changed meanwhile, the remembered password is useless now
+				wipe(rememberedKeystorePassword);
+				rememberedKeystorePassword = null;
+			}
+		} catch (final Exception e) {
+			wipe(firstTryPassword);
+			showKeystoreError(e);
+			return null;
+		}
+
+		while (true) {
+			final CredentialsDialog keystoreCredentialsDialog = new CredentialsDialog(this, LangResources.get("window_title"), LangResources.get("enterKeystorePassword"), false, true);
+			keystoreCredentialsDialog.setRememberCredentialsText(LangResources.get("keepPasswordInMemory"));
+			final Credentials credentials = keystoreCredentialsDialog.open();
+			if (credentials == null) {
+				return null;
+			}
+
+			final char[] keystorePassword = credentials.getPassword() == null ? new char[0] : credentials.getPassword();
+			try {
+				final SecureDataStore keystore = new SecureDataStore();
+				keystore.load(keystoreFile, keystorePassword);
+
+				if (keystoreCredentialsDialog.isRememberCredentials()) {
+					rememberPassword(keystorePassword);
+				}
+
+				return new OpenedKeystore(keystore, keystorePassword);
+			} catch (@SuppressWarnings("unused") final WrongPasswordException e) {
+				// Wrong password: ask again
+				wipe(keystorePassword);
+			} catch (final Exception e) {
+				// Any other problem (damaged file, I/O error) cannot be solved by entering the password again
+				wipe(keystorePassword);
+				showKeystoreError(e);
+				return null;
+			}
+		}
+	}
+
+	private void rememberPassword(final char[] password) {
+		wipe(rememberedKeystorePassword);
+		rememberedKeystorePassword = Arrays.copyOf(password, password.length);
+	}
+
+	private void showKeystoreError(final Exception e) {
+		new QuestionDialog(this, LangResources.get("error"), LangResources.get("error") + ":\n" + e.getClass().getSimpleName() + ": " + e.getMessage(), LangResources.get("ok"))
+				.withBackgroundColor(SwingColor.LightRed)
+				.open();
+	}
+
+	private static void wipe(final char[] value) {
+		if (value != null) {
+			Arrays.fill(value, '\0');
+		}
+	}
+
+	/**
+	 * Opened keystore together with the password it was opened with.
+	 */
+	private static final class OpenedKeystore {
+		private final SecureDataStore keystore;
+		private final char[] password;
+
+		private OpenedKeystore(final SecureDataStore keystore, final char[] password) {
+			this.keystore = keystore;
+			this.password = password;
 		}
 	}
 }

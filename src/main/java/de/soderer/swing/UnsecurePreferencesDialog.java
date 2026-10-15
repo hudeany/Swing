@@ -3,11 +3,13 @@ package de.soderer.swing;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -21,10 +23,10 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import de.soderer.utilities.Utilities;
 
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.UnsecureDataStore;
+import de.soderer.utilities.Utilities;
 
 /**
  * Modal dialog to manage named preference entries (e.g. connection settings)
@@ -46,10 +48,10 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 	private final File preferencesFile;
 
 	/** Data store with all preference entries, null until loaded or first created */
-	private UnsecureDataStore unsecureDataStore = null;
+	private transient UnsecureDataStore unsecureDataStore = null;
 
 	/** Data entry to store, or the loaded entry after loading; its class determines the listed entries */
-	private Object currentDataEntry;
+	private transient Object currentDataEntry;
 
 	/** Button loading the selected entry */
 	private final JButton loadButton;
@@ -111,24 +113,33 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 		newNameField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(final DocumentEvent event) {
-				createButton.setEnabled(newNameField.getText().length() > 0);
+				createButton.setEnabled(Utilities.isNotBlank(newNameField.getText()));
 			}
 
 			@Override
 			public void removeUpdate(final DocumentEvent event) {
-				createButton.setEnabled(newNameField.getText().length() > 0);
+				createButton.setEnabled(Utilities.isNotBlank(newNameField.getText()));
 			}
 
 			@Override
 			public void changedUpdate(final DocumentEvent event) {
-				createButton.setEnabled(newNameField.getText().length() > 0);
+				createButton.setEnabled(Utilities.isNotBlank(newNameField.getText()));
 			}
 		});
 		comboPanel.add(newNameField);
 
-		preferencesTable = new JTable(new DefaultTableModel(0, 1));
+		preferencesTable = new JTable(new DefaultTableModel(0, 1) {
+			private static final long serialVersionUID = 2304318826575460731L;
+
+			@Override
+			public boolean isCellEditable(final int rowIndex, final int columnIndex) {
+				// Entry names must not be changed here: a renamed row would load nothing
+				return false;
+			}
+		});
 		preferencesTable.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 		preferencesTable.setToolTipText(text);
+		// Anonymous class instead of a lambda: the buttons are final fields assigned later in the constructor
 		preferencesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(final ListSelectionEvent event) {
@@ -143,10 +154,7 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 				if (event.getClickCount() >= 2) {
 					final int rowIndex = preferencesTable.rowAtPoint(event.getPoint());
 					if (rowIndex >= 0) {
-						final DefaultTableModel tableModel = (DefaultTableModel) preferencesTable.getModel();
-						final String entryName = (String) tableModel.getValueAt(rowIndex, 0);
-						currentDataEntry = unsecureDataStore.getEntry(currentDataEntry.getClass(), entryName);
-						dispose();
+						loadEntry(getEntryName(rowIndex));
 					}
 				}
 			}
@@ -169,15 +177,9 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 
 		loadButton = new JButton(textButton_Load);
 		loadButton.setEnabled(false);
-		loadButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				if (preferencesTable.getSelectedRows().length == 1) {
-					final DefaultTableModel tableModel = (DefaultTableModel) preferencesTable.getModel();
-					final String entryName = (String) tableModel.getValueAt(preferencesTable.getSelectedRows()[0], 0);
-					currentDataEntry = unsecureDataStore.getEntry(currentDataEntry.getClass(), entryName);
-					dispose();
-				}
+		loadButton.addActionListener(event -> {
+			if (preferencesTable.getSelectedRows().length == 1) {
+				loadEntry(getEntryName(preferencesTable.getSelectedRows()[0]));
 			}
 		});
 		buttonPanel1.add(loadButton);
@@ -186,24 +188,10 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 
 		createButton = new JButton(textButton_Create);
 		createButton.setEnabled(false);
-		createButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				if (unsecureDataStore == null) {
-					unsecureDataStore = new UnsecureDataStore();
-				}
-
-				if (Utilities.isNotBlank(newNameField.getText())) {
-					unsecureDataStore.addEntry(newNameField.getText(), currentDataEntry);
-					try {
-						unsecureDataStore.save(preferencesFile);
-					} catch (final Exception e) {
-						e.printStackTrace();
-						new QuestionDialog((Window) getParent(), getTitle(), LangResources.get("cannotSaveKeystore"), LangResources.get("ok")).setBackgroundColor(SwingColor.LightRed).open();
-					}
-					currentDataEntry = null;
-					dispose();
-				}
+		createButton.addActionListener(event -> {
+			if (Utilities.isNotBlank(newNameField.getText())) {
+				getOrCreateDataStore().addEntry(newNameField.getText(), currentDataEntry);
+				saveAndClose();
 			}
 		});
 		buttonPanel1.add(createButton);
@@ -212,24 +200,10 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 
 		updateButton = new JButton(textButton_Update);
 		updateButton.setEnabled(false);
-		updateButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				if (preferencesTable.getSelectedRows().length == 1) {
-					final DefaultTableModel tableModel = (DefaultTableModel) preferencesTable.getModel();
-					for (final int rowNum : preferencesTable.getSelectedRows()) {
-						final String entryName = (String) tableModel.getValueAt(rowNum, 0);
-						unsecureDataStore.addEntry(entryName, currentDataEntry);
-						try {
-							unsecureDataStore.save(preferencesFile);
-						} catch (final Exception e) {
-							e.printStackTrace();
-							new QuestionDialog((Window) getParent(), getTitle(), LangResources.get("cannotSaveKeystore"), LangResources.get("ok")).setBackgroundColor(SwingColor.LightRed).open();
-						}
-						currentDataEntry = null;
-						dispose();
-					}
-				}
+		updateButton.addActionListener(event -> {
+			if (preferencesTable.getSelectedRows().length == 1) {
+				getOrCreateDataStore().addEntry(getEntryName(preferencesTable.getSelectedRows()[0]), currentDataEntry);
+				saveAndClose();
 			}
 		});
 		buttonPanel1.add(updateButton);
@@ -238,26 +212,18 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 
 		deleteButton = new JButton(textButton_Delete);
 		deleteButton.setEnabled(false);
-		deleteButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				if (preferencesTable.getSelectedRows().length > 0) {
-					final DefaultTableModel tableModel = (DefaultTableModel) preferencesTable.getModel();
-					for (int i = preferencesTable.getSelectedRows().length - 1; i >= 0; i--) {
-						final int rowNum = preferencesTable.getSelectedRows()[i];
-						final String entryName = (String) tableModel.getValueAt(rowNum, 0);
-						unsecureDataStore.removeEntry(currentDataEntry.getClass(), entryName);
-						tableModel.removeRow(rowNum);
-					}
-					try {
-						unsecureDataStore.save(preferencesFile);
-					} catch (final Exception e) {
-						e.printStackTrace();
-						new QuestionDialog((Window) getParent(), getTitle(), LangResources.get("cannotSaveKeystore"), LangResources.get("ok")).setBackgroundColor(SwingColor.LightRed).open();
-					}
-					currentDataEntry = null;
-					dispose();
+		deleteButton.addActionListener(event -> {
+			if (preferencesTable.getSelectedRows().length > 0) {
+				// Snapshot of the names first: removing rows changes the selection indexes
+				final List<String> entryNames = new ArrayList<>();
+				for (final int rowIndex : preferencesTable.getSelectedRows()) {
+					entryNames.add(getEntryName(rowIndex));
 				}
+				final UnsecureDataStore dataStore = getOrCreateDataStore();
+				for (final String entryName : entryNames) {
+					dataStore.removeEntry(currentDataEntry.getClass(), entryName);
+				}
+				saveAndClose();
 			}
 		});
 		buttonPanel1.add(deleteButton);
@@ -270,30 +236,15 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 		buttonPanel2.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		final JButton saveButton = new JButton(textButton_Save);
-		saveButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				if (unsecureDataStore == null) {
-					unsecureDataStore = new UnsecureDataStore();
-				}
-
+		saveButton.addActionListener(event -> {
+			{
+				final UnsecureDataStore dataStore = getOrCreateDataStore();
 				if (Utilities.isNotBlank(newNameField.getText())) {
-					unsecureDataStore.addEntry(newNameField.getText(), currentDataEntry);
+					dataStore.addEntry(newNameField.getText(), currentDataEntry);
 				} else if (preferencesTable.getSelectedRows().length == 1) {
-					// Only update the entry here, it is saved below (saving here too wrote the file twice and showed errors twice)
-					final DefaultTableModel tableModel = (DefaultTableModel) preferencesTable.getModel();
-					final String entryName = (String) tableModel.getValueAt(preferencesTable.getSelectedRows()[0], 0);
-					unsecureDataStore.addEntry(entryName, currentDataEntry);
+					dataStore.addEntry(getEntryName(preferencesTable.getSelectedRows()[0]), currentDataEntry);
 				}
-
-				try {
-					unsecureDataStore.save(preferencesFile);
-				} catch (final Exception e) {
-					e.printStackTrace();
-					new QuestionDialog((Window) getParent(), getTitle(), LangResources.get("cannotSaveKeystore"), LangResources.get("ok")).setBackgroundColor(SwingColor.LightRed).open();
-				}
-				currentDataEntry = null;
-				dispose();
+				saveAndClose();
 			}
 		});
 		buttonPanel2.add(saveButton);
@@ -301,12 +252,9 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 		buttonPanel2.add(Box.createRigidArea(new Dimension(5, 0)));
 
 		final JButton cancelButton = new JButton(textButton_Cancel);
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent event) {
-				currentDataEntry = null;
-				dispose();
-			}
+		cancelButton.addActionListener(event -> {
+			currentDataEntry = null;
+			dispose();
 		});
 		buttonPanel2.add(cancelButton);
 
@@ -326,7 +274,44 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 
 		setLocationRelativeTo(parent);
 
-		newNameField.requestFocus();
+		// requestFocus() before the dialog is visible has no effect
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowOpened(final WindowEvent event) {
+				newNameField.requestFocusInWindow();
+			}
+		});
+	}
+
+	private String getEntryName(final int rowIndex) {
+		return (String) preferencesTable.getModel().getValueAt(rowIndex, 0);
+	}
+
+	private void loadEntry(final String entryName) {
+		currentDataEntry = unsecureDataStore.getEntry(currentDataEntry.getClass(), entryName);
+		dispose();
+	}
+
+	private UnsecureDataStore getOrCreateDataStore() {
+		if (unsecureDataStore == null) {
+			unsecureDataStore = new UnsecureDataStore();
+		}
+		return unsecureDataStore;
+	}
+
+	/**
+	 * Saves the data store and closes the dialog. An error is shown if saving
+	 * fails.
+	 */
+	private void saveAndClose() {
+		try {
+			getOrCreateDataStore().save(preferencesFile);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			new QuestionDialog(this, getTitle(), LangResources.get("cannotSaveKeystore") + "\n" + e.getMessage(), LangResources.get("ok")).withBackgroundColor(SwingColor.LightRed).open();
+		}
+		currentDataEntry = null;
+		dispose();
 	}
 
 	/**
@@ -349,8 +334,18 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 		return currentDataEntry;
 	}
 
+	/**
+	 * Loads the preferences file and shows the dialog.
+	 *
+	 * @return always true
+	 * @throws IllegalStateException if no current data entry was set
+	 */
 	@Override
 	public Boolean open() {
+		if (currentDataEntry == null) {
+			throw new IllegalStateException("setCurrentDataEntry() must be called before open()");
+		}
+
 		try {
 			if (preferencesFile.exists()) {
 				unsecureDataStore = new UnsecureDataStore();
@@ -370,7 +365,7 @@ public class UnsecurePreferencesDialog extends ModalDialog<Boolean> {
 				setVisible(true);
 			}
 		} catch (final Exception e) {
-			new QuestionDialog((Window) getParent(), "ERROR", "ERROR:\n" + e.getMessage()).setBackgroundColor(SwingColor.LightRed).open();
+			new QuestionDialog(getOwner(), "ERROR", "ERROR:\n" + e.getMessage()).withBackgroundColor(SwingColor.LightRed).open();
 		}
 		return true;
 	}

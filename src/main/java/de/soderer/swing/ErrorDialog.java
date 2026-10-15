@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Window;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -76,6 +75,9 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 	/** Panel holding the summary and the stack trace while the details are shown */
 	private JPanel detailPanel;
 
+	/** Whether the details are currently shown */
+	private boolean detailsShown = false;
+
 	/**
 	 * Creates an error dialog.
 	 *
@@ -103,13 +105,17 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 		getContentPane().setLayout(new BorderLayout(margin, margin));
 		((JPanel) getContentPane()).setBorder(BorderFactory.createEmptyBorder(margin, margin, margin, margin));
 
-		try (InputStream is = getClass().getClassLoader().getResourceAsStream("images/icons/exclamation.png")) {
-			if (is != null) {
-				final ImageIcon icon = new ImageIcon(is.readAllBytes());
-				setIconImage(icon.getImage());
+		// The icon is packaged as "icons/exclamation.png" in this library, the old location is kept as fallback
+		for (final String iconPath : new String[] { "icons/exclamation.png", "images/icons/exclamation.png" }) {
+			try (InputStream is = ErrorDialog.class.getClassLoader().getResourceAsStream(iconPath)) {
+				if (is != null) {
+					final ImageIcon icon = new ImageIcon(is.readAllBytes());
+					setIconImage(icon.getImage());
+					break;
+				}
+			} catch (@SuppressWarnings("unused") final Exception e) {
+				// Try the next location
 			}
-		} catch (@SuppressWarnings("unused") final Exception e) {
-			// Do nothing
 		}
 
 		final JTextArea mainText = new JTextArea(getMainText());
@@ -258,9 +264,12 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 
 		if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("linux")) {
 			try {
-				final Process process = new ProcessBuilder("xdg-open", mailtoUri.toString()).redirectErrorStream(true).start();
-				// Discard the output, so a chatty email client cannot block on a full pipe
-				process.getInputStream().transferTo(OutputStream.nullOutputStream());
+				// Output is discarded by the OS instead of read via a pipe: an email client started by xdg-open inherits
+				// the pipe, so reading it until EOF would block until the email client is closed
+				final Process process = new ProcessBuilder("xdg-open", mailtoUri.toString())
+						.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+						.redirectError(ProcessBuilder.Redirect.DISCARD)
+						.start();
 				if (process.waitFor(XDG_OPEN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
 					return process.exitValue() == 0;
 				} else {
@@ -283,9 +292,9 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 	}
 
 	private void toggleDetails() {
-		final boolean show = detailButton.getText().equals(LangResources.get("detailsMore"));
-		detailButton.setText(show ? LangResources.get("detailsLess") : LangResources.get("detailsMore"));
-		setupDetailPanel(show);
+		detailsShown = !detailsShown;
+		detailButton.setText(detailsShown ? LangResources.get("detailsLess") : LangResources.get("detailsMore"));
+		setupDetailPanel(detailsShown);
 	}
 
 	private void setupDetailPanel(final boolean show) {
@@ -319,7 +328,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 		detailPanel.revalidate();
 		detailPanel.repaint();
 
+		// Only resize, the dialog must not jump back to the center if the user moved it
 		pack();
-		setLocationRelativeTo(getParent());
 	}
 }
