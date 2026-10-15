@@ -8,6 +8,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.105.jar"/>
+	<classpathentry kind="lib" path="lib/soderer-utilities-26.2.106.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

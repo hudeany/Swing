@@ -6,7 +6,7 @@
 	<property name="artifactId" value="soderer-swing" />
 
 	<!-- Dependency versions -->
-	<property name="soderer-utilities.version" value="26.2.105" />
+	<property name="soderer-utilities.version" value="26.2.106" />
 
 	<!-- Runtime libraries of this project go to "lib/" (may stay empty) -->
 	<target name="download_dependencies" depends="register_antbuildhelp">
