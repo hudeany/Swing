@@ -52,7 +52,7 @@ public class SwingUtilities {
 		if (Component.class.isAssignableFrom(clazz) && !javax.swing.SwingUtilities.isEventDispatchThread()) {
 			try {
 				javax.swing.SwingUtilities.invokeAndWait(() -> forceConstructorInitInternal(clazz));
-			} catch (final InterruptedException e) {
+			} catch (@SuppressWarnings("unused") final InterruptedException e) {
 				Thread.currentThread().interrupt();
 				System.out.println("forceConstructorInit interrupted for class: " + clazz.getName());
 			} catch (final InvocationTargetException e) {
