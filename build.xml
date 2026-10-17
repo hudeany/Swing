@@ -7,6 +7,9 @@
 
 	<!-- Dependency versions -->
 	<property name="soderer-utilities.version" value="26.2.113" />
+	
+	<!-- Maven POM dependencies: "groupId:artifactId:version[:optional]" -->
+	<property name="mavenDependency.soderer-utilities" value="de.soderer:soderer-utilities:${soderer-utilities.version}" />
 
 	<!-- Runtime libraries of this project go to "lib/" (may stay empty) -->
 	<target name="download_dependencies" depends="register_antbuildhelp">
