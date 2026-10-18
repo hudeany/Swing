@@ -6,7 +6,7 @@
 	<property name="artifactId" value="soderer-swing" />
 
 	<!-- Dependency versions -->
-	<property name="soderer-utilities.version" value="26.2.113" />
+	<property name="soderer-utilities.version" value="26.2.114" />
 	
 	<!-- Maven POM dependencies: "groupId:artifactId:version[:optional]" -->
 	<property name="mavenDependency.soderer-utilities" value="de.soderer:soderer-utilities:${soderer-utilities.version}" />
