@@ -298,7 +298,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 				@Override
 				public void actionPerformed(final ActionEvent event) {
 					final Credentials credentials = getCredentials();
-					returnValue = credentials == null ? new Credentials() : credentials.setPassword(null);
+					returnValue = credentials == null ? new Credentials() : credentials.withPassword(null);
 					dispose();
 				}
 			});
