@@ -85,10 +85,10 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	private JButton okButton;
 
 	/** Whether the dialog asks for a username */
-	private final boolean aquireUsername;
+	private final boolean acquireUsername;
 
 	/** Whether the dialog asks for a password */
-	private final boolean aquirePassword;
+	private final boolean acquirePassword;
 
 	/** Currently entered username, null if no username is requested */
 	private String username = null;
@@ -115,11 +115,11 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	 * @param parent owner window, may be null
 	 * @param title title of the dialog
 	 * @param text text shown above the input fields, may be blank
-	 * @param aquireUsername true to ask for a username
-	 * @param aquirePassword true to ask for a password
+	 * @param acquireUsername true to ask for a username
+	 * @param acquirePassword true to ask for a password
 	 */
-	public CredentialsDialog(final Window parent, final String title, final String text, final boolean aquireUsername, final boolean aquirePassword) {
-		this(parent, title, text, aquireUsername, aquirePassword, LangResources.get("username"), LangResources.get("password"), LangResources.get("ok"), LangResources.get("cancel"));
+	public CredentialsDialog(final Window parent, final String title, final String text, final boolean acquireUsername, final boolean acquirePassword) {
+		this(parent, title, text, acquireUsername, acquirePassword, LangResources.get("username"), LangResources.get("password"), LangResources.get("ok"), LangResources.get("cancel"));
 	}
 
 	/**
@@ -128,14 +128,14 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	 * @param parent owner window, may be null
 	 * @param title title of the dialog
 	 * @param text text shown above the input fields, may be blank
-	 * @param aquireUsername true to ask for a username
-	 * @param aquirePassword true to ask for a password
+	 * @param acquireUsername true to ask for a username
+	 * @param acquirePassword true to ask for a password
 	 * @param text_Username label of the username field
 	 * @param text_Password label of the password field
 	 * @param text_OK text of the OK button
 	 * @param text_Cancel text of the cancel button
 	 */
-	public CredentialsDialog(final Window parent, final String title, final String text, final boolean aquireUsername, final boolean aquirePassword,
+	public CredentialsDialog(final Window parent, final String title, final String text, final boolean acquireUsername, final boolean acquirePassword,
 			final String text_Username, final String text_Password, final String text_OK, final String text_Cancel) {
 		super(parent, title);
 
@@ -145,8 +145,8 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 		this.text_OK = text_OK;
 		this.text_Cancel = text_Cancel;
 
-		this.aquireUsername = aquireUsername;
-		this.aquirePassword = aquirePassword;
+		this.acquireUsername = acquireUsername;
+		this.acquirePassword = acquirePassword;
 
 		setResizable(false);
 
@@ -205,7 +205,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 			panel.add(textPanel);
 		}
 
-		if (aquireUsername) {
+		if (acquireUsername) {
 			// User Panel
 			final JPanel userPanel = new JPanel();
 			userPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -228,7 +228,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 			userField = newUserField;
 		}
 
-		if (aquirePassword) {
+		if (acquirePassword) {
 			// Password Panel
 			final JPanel passwordPanel = new JPanel();
 			passwordPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -345,8 +345,8 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	}
 
 	private void checkButtonStatus() {
-		boolean enabled = !aquireUsername || Utilities.isNotEmpty(username);
-		if (aquirePassword && passwordConfirmation) {
+		boolean enabled = !acquireUsername || Utilities.isNotEmpty(username);
+		if (acquirePassword && passwordConfirmation) {
 			enabled = enabled && Arrays.equals(password, passwordConfirmationValue);
 		}
 		okButton.setEnabled(enabled);
@@ -445,19 +445,19 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	 */
 	public Credentials getCredentials() {
 		final char[] passwordCopy = password == null ? null : Arrays.copyOf(password, password.length);
-		if (aquireUsername && aquirePassword) {
+		if (acquireUsername && acquirePassword) {
 			if (username != null) {
 				return new Credentials(username, passwordCopy);
 			} else {
 				return null;
 			}
-		} else if (aquireUsername) {
+		} else if (acquireUsername) {
 			if (username != null) {
 				return new Credentials(username);
 			} else {
 				return null;
 			}
-		} else if (aquirePassword) {
+		} else if (acquirePassword) {
 			return new Credentials(passwordCopy);
 		} else {
 			return null;
