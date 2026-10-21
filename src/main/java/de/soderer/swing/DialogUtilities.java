@@ -16,7 +16,7 @@ import de.soderer.utilities.collection.UniqueFifoQueuedList;
  * Small GUI helpers shared by the main window and its actions: file choosers,
  * recent lists and popup menu items
  */
-final class DialogUtilities {
+public final class DialogUtilities {
 	private DialogUtilities() {
 		// Utility class, no instances
 	}
