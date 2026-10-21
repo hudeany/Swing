@@ -28,11 +28,16 @@ public class PathFieldFileChooser extends JFileChooser {
 	private String pathLabelText = null;
 	private boolean hideDirectoryCombo = true;
 
+	/**
+	 * Creates a file chooser showing the user's default directory.
+	 */
 	public PathFieldFileChooser() {
 		this((File) null);
 	}
 
 	/**
+	 * Creates a file chooser showing the given directory.
+	 *
 	 * @param currentDirectory
 	 *            directory shown initially, null for the user's default directory
 	 */
@@ -46,8 +51,11 @@ public class PathFieldFileChooser extends JFileChooser {
 	}
 
 	/**
-	 * @param pathLabelText
-	 *            text of the label in front of the path field, null for no label
+	 * Sets the text of the label in front of the path field.
+	 *
+	 * @param newPathLabelText
+	 *            text of the label, null for no label (default)
+	 * @return this file chooser, for chaining
 	 */
 	public PathFieldFileChooser withPathLabelText(final String newPathLabelText) {
 		pathLabelText = newPathLabelText;
@@ -55,8 +63,12 @@ public class PathFieldFileChooser extends JFileChooser {
 	}
 
 	/**
-	 * @param hideDirectoryCombo
-	 *            whether the directory hierarchy combo box of the look and feel is hidden (default: true)
+	 * Sets whether the directory hierarchy combo box ("Look in" / "Save in") of the look and feel is hidden.
+	 * Takes effect when the dialog is created, so it must be set before showing the dialog.
+	 *
+	 * @param newHideDirectoryCombo
+	 *            true to hide the combo box (default), false to keep it
+	 * @return this file chooser, for chaining
 	 */
 	public PathFieldFileChooser withDirectoryComboHidden(final boolean newHideDirectoryCombo) {
 		hideDirectoryCombo = newHideDirectoryCombo;
@@ -140,6 +152,10 @@ public class PathFieldFileChooser extends JFileChooser {
 	 * Hides the combo box with the directory hierarchy and its label. The combo is
 	 * recognized by its File items, the file filter combo contains FileFilters.
 	 * Depends on the look and feel; if no such combo is found, nothing is changed.
+	 *
+	 * @param container
+	 *            container to search recursively
+	 * @return true if the combo box was found and hidden
 	 */
 	private static boolean hideDirectoryCombo(final Container container) {
 		for (final Component component : container.getComponents()) {
