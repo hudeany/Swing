@@ -4,9 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.datatransfer.StringSelection;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,7 +16,8 @@ import de.soderer.utilities.LangResources;
 
 /**
  * Modal dialog showing a (possibly long) read-only text, e.g. a report, with
- * buttons to copy the text to the clipboard and to close the dialog.
+ * buttons to copy the text to the clipboard and to close the dialog. The text
+ * can also be selected and copied partially (CTRL+C or context menu).
  */
 public class ShowDataDialog extends ModalDialog<Boolean> {
 	private static final long serialVersionUID = -3818237915734861152L;
@@ -49,7 +48,8 @@ public class ShowDataDialog extends ModalDialog<Boolean> {
 		getContentPane().setLayout(new BorderLayout(margin, margin));
 		((JPanel) getContentPane()).setBorder(BorderFactory.createEmptyBorder(margin, margin, margin, margin));
 
-		textArea = new JTextArea(text == null ? "" : text);
+		// Selectable and copyable, ENTER is passed on to the default button
+		textArea = ReadOnlyTextSupport.install(new JTextArea(text == null ? "" : text));
 		textArea.setEditable(false);
 		textArea.setCaretPosition(0);
 		textArea.setBorder(BorderFactory.createEmptyBorder(margin, margin, margin, margin));
@@ -59,8 +59,9 @@ public class ShowDataDialog extends ModalDialog<Boolean> {
 
 		final JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, margin, 0));
 
+		// Always copies the complete text, a partial selection is copied via CTRL+C or the context menu
 		final JButton copyButton = new JButton(LangResources.get("copyToClipboard"));
-		copyButton.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(textArea.getText()), null));
+		copyButton.addActionListener(e -> ReadOnlyTextSupport.copyToClipboard(textArea.getText(), copyButton));
 		buttonPanel.add(copyButton);
 
 		final JButton closeButton = new JButton(LangResources.get("close"));

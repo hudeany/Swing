@@ -30,12 +30,14 @@ import de.soderer.utilities.Utilities;
 import de.soderer.utilities.VisibleException;
 
 /**
- * Modal dialog showing an error message, with buttons to show the stack trace
- * details and to send the error via the standard email client.
+ * Modal dialog showing an error message, with buttons to copy the error to the
+ * clipboard, to show the stack trace details and to send the error via the
+ * standard email client.
  *
  * <p>
  * The message shown is the visible message of a {@link VisibleException}, the
- * message of any other throwable, or a generic error text.
+ * message of any other throwable, or a generic error text. All texts can be
+ * selected and copied (CTRL+C or context menu).
  * </p>
  *
  * <p>
@@ -118,7 +120,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 			}
 		}
 
-		final JTextArea mainText = new JTextArea(getMainText());
+		final JTextArea mainText = ReadOnlyTextSupport.install(new JTextArea(getMainText()));
 		mainText.setEditable(false);
 		mainText.setLineWrap(true);
 		mainText.setWrapStyleWord(true);
@@ -150,6 +152,11 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 			leftButtons.add(mailButton);
 		}
 
+		// Copies the complete error (title, message and stack trace), e.g. for pasting into a text editor or a bug report
+		final JButton copyButton = new JButton(LangResources.get("copyToClipboard"));
+		copyButton.addActionListener(e -> ReadOnlyTextSupport.copyToClipboard(getClipboardText(), copyButton));
+		leftButtons.add(copyButton);
+
 		detailButton = new JButton(LangResources.get("detailsMore"));
 		detailButton.addActionListener(e -> toggleDetails());
 		leftButtons.add(detailButton);
@@ -179,6 +186,23 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 		} else {
 			return LangResources.get("errorOccurred");
 		}
+	}
+
+	/**
+	 * Complete error text for the clipboard: dialog title, visible message (if it differs from the
+	 * exception message) and stack trace
+	 */
+	private String getClipboardText() {
+		final StringBuilder clipboardText = new StringBuilder(getTitle()).append("\n\n");
+		if (throwable == null) {
+			clipboardText.append(getMainText());
+		} else {
+			if (throwable instanceof VisibleException) {
+				clipboardText.append(getMainText()).append("\n\n");
+			}
+			clipboardText.append(ExceptionUtilities.throwableToString(throwable));
+		}
+		return clipboardText.toString();
 	}
 
 	/**
@@ -305,7 +329,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 			final String text2 = throwable == null ? getMainText() : throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
 			final String text3 = throwable == null ? null : ExceptionUtilities.throwableToString(throwable);
 
-			final JTextArea summary = new JTextArea(text2);
+			final JTextArea summary = ReadOnlyTextSupport.install(new JTextArea(text2));
 			summary.setEditable(false);
 			summary.setLineWrap(true);
 			summary.setWrapStyleWord(true);
@@ -314,9 +338,10 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 			detailPanel.add(summary);
 
 			if (Utilities.isNotEmpty(text3)) {
-				final JTextArea stackTrace = new JTextArea(text3);
+				final JTextArea stackTrace = ReadOnlyTextSupport.install(new JTextArea(text3));
 				stackTrace.setEditable(false);
 				stackTrace.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10));
+				stackTrace.setCaretPosition(0);
 
 				final JScrollPane scroll = new JScrollPane(stackTrace);
 				scroll.setPreferredSize(new Dimension(500, 300));

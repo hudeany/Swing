@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -16,13 +18,14 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import de.soderer.utilities.Utilities;
 
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.Utilities;
 
 /**
  * Modal dialog showing a (possibly multi-line) text with a row of answer
- * buttons and an optional checkbox.
+ * buttons and an optional checkbox. The text can be selected and copied
+ * (CTRL+C or context menu).
  *
  * <p>
  * {@link #open()} returns the index of the pressed button, or null if the
@@ -51,6 +54,9 @@ public class QuestionDialog extends ModalDialog<Integer> {
 	/** Content panel, rebuilt whenever an option affecting the layout changes */
 	private JPanel panel;
 
+	/** Default button, which gets the initial focus when the dialog is opened */
+	private JButton defaultButton;
+
 	/**
 	 * Creates a question dialog. The first button is the default button.
 	 *
@@ -69,6 +75,16 @@ public class QuestionDialog extends ModalDialog<Integer> {
 		setResizable(false);
 
 		createComponents(this);
+
+		// The text area is focusable for selecting and copying, but the initial focus belongs to the default button
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowOpened(final WindowEvent event) {
+				if (defaultButton != null) {
+					defaultButton.requestFocusInWindow();
+				}
+			}
+		});
 	}
 
 	private void createComponents(final QuestionDialog questionDialog) {
@@ -77,7 +93,8 @@ public class QuestionDialog extends ModalDialog<Integer> {
 
 		panel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-		final JTextArea textField = new JTextArea();
+		// Selectable and copyable, ENTER is passed on to the default button
+		final JTextArea textField = ReadOnlyTextSupport.install(new JTextArea());
 
 		// Proportional dialog font instead of the monospaced JTextArea default ("Arial" is often missing on Linux)
 		final Font f = textField.getFont();
@@ -85,8 +102,7 @@ public class QuestionDialog extends ModalDialog<Integer> {
 
 		textField.setText(text);
 		textField.setEditable(false);
-		// Not focusable, so the initial focus is on a button and Enter triggers the default button
-		textField.setFocusable(false);
+		textField.setCaretPosition(0);
 		if (backgroundcolor != null) {
 			textField.setBackground(backgroundcolor);
 		} else {
@@ -179,6 +195,7 @@ public class QuestionDialog extends ModalDialog<Integer> {
 
 		setLocationRelativeTo(getOwner());
 
+		defaultButton = buttonToSelect;
 		if (buttonToSelect != null) {
 			getRootPane().setDefaultButton(buttonToSelect);
 		}
