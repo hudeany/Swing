@@ -16,8 +16,8 @@ import de.soderer.utilities.collection.UniqueFifoQueuedList;
  * Small GUI helpers shared by the main window and its actions: file choosers,
  * recent lists and popup menu items
  */
-public final class DialogUtilities {
-	private DialogUtilities() {
+public final class SwingDialogUtilities {
+	private SwingDialogUtilities() {
 		// Utility class, no instances
 	}
 
@@ -28,7 +28,7 @@ public final class DialogUtilities {
 	 *
 	 * @return index of the last entry, or -1 if the list is empty
 	 */
-	static int getLastEntryIndex(final UniqueFifoQueuedList<String> recentEntries) {
+	public static int getLastEntryIndex(final UniqueFifoQueuedList<String> recentEntries) {
 		return recentEntries == null ? -1 : recentEntries.size() - 1;
 	}
 
@@ -39,7 +39,7 @@ public final class DialogUtilities {
 	 * to the unique list does not necessarily change its position. If the list
 	 * is full, a new entry pushes out the first (oldest) entry.
 	 */
-	static void moveToEnd(final UniqueFifoQueuedList<String> recentEntries, final String entry) {
+	public static void moveToEnd(final UniqueFifoQueuedList<String> recentEntries, final String entry) {
 		final List<String> entries = new ArrayList<>(recentEntries);
 		entries.remove(entry);
 		entries.add(entry);
@@ -54,7 +54,7 @@ public final class DialogUtilities {
 	 *
 	 * @return the directory, or null if the path is blank or no parent exists
 	 */
-	static File getNearestExistingDirectory(final String path) {
+	public static File getNearestExistingDirectory(final String path) {
 		if (Utilities.isBlank(path)) {
 			return null;
 		}
@@ -71,7 +71,7 @@ public final class DialogUtilities {
 	 * @param fileExtensions optional extension filters (without dot), e.g. "xlsx"
 	 * @return the selected file or null if canceled
 	 */
-	static File chooseFileToOpen(final Component parent, final String title, final String initialDirectory, final String... fileExtensions) {
+	public static File chooseFileToOpen(final Component parent, final String title, final String initialDirectory, final String... fileExtensions) {
 		final JFileChooser fileChooser = createFileChooser(title, fileExtensions);
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		final File directory = getNearestExistingDirectory(initialDirectory);
@@ -86,7 +86,7 @@ public final class DialogUtilities {
 	 *
 	 * @return the selected file or null if canceled
 	 */
-	static File chooseFileToSave(final Component parent, final String title, final String initialDirectory, final String proposedFileName, final String... fileExtensions) {
+	public static File chooseFileToSave(final Component parent, final String title, final String initialDirectory, final String proposedFileName, final String... fileExtensions) {
 		final JFileChooser fileChooser = createFileChooser(title, fileExtensions);
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		final File directory = getNearestExistingDirectory(initialDirectory);
@@ -107,7 +107,7 @@ public final class DialogUtilities {
 	 *
 	 * @return the selected directory or null if canceled
 	 */
-	static File chooseDirectory(final Component parent, final String title, final String initialDirectory) {
+	public static File chooseDirectory(final Component parent, final String title, final String initialDirectory) {
 		final JFileChooser fileChooser = createFileChooser(title);
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		final File directory = getNearestExistingDirectory(initialDirectory);
