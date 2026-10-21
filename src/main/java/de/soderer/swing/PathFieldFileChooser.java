@@ -24,8 +24,13 @@ import javax.swing.UIManager;
 public class PathFieldFileChooser extends JFileChooser {
 	private static final long serialVersionUID = -3624598101370315247L;
 
+	/** Editable field above the file list, shows the complete path of the current directory or the selected file */
 	private final JTextField pathField = new JTextField();
+
+	/** Text of the label in front of the path field, null for no label */
 	private String pathLabelText = null;
+
+	/** Whether the directory hierarchy combo box of the look and feel is hidden when the dialog is created */
 	private boolean hideDirectoryCombo = true;
 
 	/**
