@@ -6,7 +6,7 @@
 	<property name="artifactId" value="soderer-swing" />
 
 	<!-- Dependency versions -->
-	<property name="soderer-utilities.version" value="26.2.122" />
+	<property name="soderer-utilities.version" value="26.2.123" />
 	
 	<!-- Maven POM dependencies: "groupId:artifactId:version[:optional]" -->
 	<property name="mavenDependency.soderer-utilities" value="de.soderer:soderer-utilities:${soderer-utilities.version}" />
@@ -24,7 +24,7 @@
 	</target>
 
 	<!-- Special: AntBuildHelp is used to download the runtime libraries -->
-	<property name="antbuildhelp.version" value="26.0.13" />
+	<property name="antbuildhelp.version" value="26.0.14" />
 
 	<available file="lib_build/antbuildhelp-${antbuildhelp.version}.jar" property="antbuildhelp.available" />
 	<target name="get_antbuildhelp" unless="antbuildhelp.available">
