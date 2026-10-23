@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog to select one value out of a list of values.
@@ -81,7 +81,7 @@ public class ComboSelectionDialog extends ModalDialog<String> {
 		final JPanel centerPanel = new JPanel();
 		centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.PAGE_AXIS));
 
-		if (Utilities.isNotBlank(text)) {
+		if (StringUtilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea(text);
 			textField.setEditable(false);
 			textField.setFocusable(false);

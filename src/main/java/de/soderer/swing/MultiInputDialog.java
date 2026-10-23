@@ -24,7 +24,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog with a text and one labeled input field per label text.
@@ -119,7 +119,7 @@ public class MultiInputDialog extends ModalDialog<List<String>> {
 
 		panel.setLayout(new GridBagLayout());
 
-		if (Utilities.isNotBlank(text)) {
+		if (StringUtilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			final Font f = textField.getFont();
 			textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));

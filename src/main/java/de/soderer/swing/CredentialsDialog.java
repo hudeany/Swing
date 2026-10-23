@@ -26,7 +26,7 @@ import javax.swing.event.DocumentListener;
 
 import de.soderer.utilities.Credentials;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog asking for a username and/or a password.
@@ -181,7 +181,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 
 		panel.add(Box.createRigidArea(new Dimension(0, 5)));
 
-		if (Utilities.isNotBlank(text)) {
+		if (StringUtilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			final Font f = textField.getFont();
 			textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));
@@ -272,7 +272,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 			}
 		}
 
-		if (Utilities.isNotBlank(rememberCredentialsText)) {
+		if (StringUtilities.isNotBlank(rememberCredentialsText)) {
 			// RememberCredentials Panel
 			final JPanel rememberCredentialsPanel = new JPanel();
 			rememberCredentialsPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -345,7 +345,7 @@ public class CredentialsDialog extends ModalDialog<Credentials> {
 	}
 
 	private void checkButtonStatus() {
-		boolean enabled = !acquireUsername || Utilities.isNotEmpty(username);
+		boolean enabled = !acquireUsername || StringUtilities.isNotEmpty(username);
 		if (acquirePassword && passwordConfirmation) {
 			enabled = enabled && Arrays.equals(password, passwordConfirmationValue);
 		}

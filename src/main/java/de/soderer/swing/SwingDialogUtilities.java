@@ -9,6 +9,7 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import de.soderer.utilities.LangResources;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.Utilities;
 import de.soderer.utilities.collection.UniqueFifoQueuedList;
 
@@ -60,7 +61,7 @@ public final class SwingDialogUtilities {
 	 * @return the directory, or null if the path is blank or no parent exists
 	 */
 	public static File getNearestExistingDirectory(final String path) {
-		if (Utilities.isBlank(path)) {
+		if (StringUtilities.isBlank(path)) {
 			return null;
 		}
 		File directory = new File(Utilities.replaceUsersHome(path)).getAbsoluteFile();
@@ -106,7 +107,7 @@ public final class SwingDialogUtilities {
 		if (directory != null) {
 			fileChooser.setCurrentDirectory(directory);
 		}
-		if (Utilities.isNotBlank(proposedFileName)) {
+		if (StringUtilities.isNotBlank(proposedFileName)) {
 			// Also shows the complete path of the proposed file in the path field
 			fileChooser.setSelectedFile(new File(fileChooser.getCurrentDirectory(), proposedFileName));
 		}

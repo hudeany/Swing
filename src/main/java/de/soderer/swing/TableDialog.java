@@ -15,7 +15,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
-import de.soderer.utilities.Utilities;
+
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog showing a read-only table of string values with a close
@@ -47,7 +48,7 @@ public class TableDialog extends ModalDialog<Boolean> {
 		final JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
-		if (Utilities.isNotBlank(text)) {
+		if (StringUtilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			textField.setText(text);
 			textField.setEditable(false);

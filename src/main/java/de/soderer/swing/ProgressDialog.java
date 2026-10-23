@@ -21,7 +21,7 @@ import javax.swing.WindowConstants;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.worker.WorkerParentSimple;
 import de.soderer.utilities.worker.WorkerSimple;
 
@@ -121,7 +121,7 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 		final JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
-		if (Utilities.isNotBlank(commentStringFormat)) {
+		if (StringUtilities.isNotBlank(commentStringFormat)) {
 			final JPanel commentLabelPanel = new JPanel();
 			commentLabelPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 			commentLabel = new JLabel(formatComment(commentStringFormat, "0", "0", "0"));

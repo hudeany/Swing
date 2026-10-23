@@ -20,7 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog showing a (possibly multi-line) text with a row of answer
@@ -123,7 +123,7 @@ public class QuestionDialog extends ModalDialog<Integer> {
 
 		panel.add(textPanel);
 
-		if (Utilities.isNotBlank(checkboxText)) {
+		if (StringUtilities.isNotBlank(checkboxText)) {
 			// Checkbox Panel
 			final JPanel checkboxPanel = new JPanel();
 			checkboxPanel.setLayout(new FlowLayout(FlowLayout.CENTER));

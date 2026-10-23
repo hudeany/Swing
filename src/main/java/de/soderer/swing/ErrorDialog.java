@@ -26,7 +26,7 @@ import javax.swing.SwingUtilities;
 
 import de.soderer.utilities.ExceptionUtilities;
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 import de.soderer.utilities.VisibleException;
 
 /**
@@ -91,7 +91,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 	 * @param throwable error to show, may be null
 	 */
 	public ErrorDialog(final Window parent, final String applicationName, final String applicationVersion, final String emailRecipient, final Throwable throwable) {
-		super(parent, applicationName + (Utilities.isNotBlank(applicationVersion) ? " (" + applicationVersion + ")" : "") + " " + LangResources.get("error"));
+		super(parent, applicationName + (StringUtilities.isNotBlank(applicationVersion) ? " (" + applicationVersion + ")" : "") + " " + LangResources.get("error"));
 
 		this.applicationName = applicationName;
 		this.applicationVersion = applicationVersion;
@@ -146,7 +146,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, margin, 0));
 
 		final JPanel leftButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, margin, 0));
-		if (Utilities.isNotBlank(emailRecipient)) {
+		if (StringUtilities.isNotBlank(emailRecipient)) {
 			final JButton mailButton = new JButton(LangResources.get("openMail"));
 			mailButton.addActionListener(e -> openMail(mailButton));
 			leftButtons.add(mailButton);
@@ -212,7 +212,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 	 */
 	private void openMail(final JButton mailButton) {
 		mailButton.setEnabled(false);
-		final String subject = "Error in " + applicationName + (Utilities.isNotBlank(applicationVersion) ? " (" + applicationVersion + ")" : "");
+		final String subject = "Error in " + applicationName + (StringUtilities.isNotBlank(applicationVersion) ? " (" + applicationVersion + ")" : "");
 		final URI mailtoUri = createMailtoUri(emailRecipient, subject, getErrorDetails());
 
 		final Thread mailThread = new Thread(() -> {
@@ -337,7 +337,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 
 			detailPanel.add(summary);
 
-			if (Utilities.isNotEmpty(text3)) {
+			if (StringUtilities.isNotEmpty(text3)) {
 				final JTextArea stackTrace = ReadOnlyTextSupport.install(new JTextArea(text3));
 				stackTrace.setEditable(false);
 				stackTrace.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10));

@@ -16,7 +16,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
-import de.soderer.utilities.Utilities;
+
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog showing a table with a checkbox in front of every row, so the
@@ -61,7 +62,7 @@ public class SelectableTableDialog extends ModalDialog<Boolean> {
 		final JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
-		if (Utilities.isNotBlank(text)) {
+		if (StringUtilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			textField.setText(text);
 			textField.setEditable(false);
@@ -136,7 +137,7 @@ public class SelectableTableDialog extends ModalDialog<Boolean> {
 
 		buttonPanel1.add(Box.createRigidArea(new Dimension(5, 0)));
 
-		if (Utilities.isNotBlank(selectAllButtonText)) {
+		if (StringUtilities.isNotBlank(selectAllButtonText)) {
 			final JButton selectAllButton = new JButton(selectAllButtonText);
 			selectAllButton.addActionListener(new ActionListener() {
 				@Override
@@ -152,7 +153,7 @@ public class SelectableTableDialog extends ModalDialog<Boolean> {
 			buttonPanel1.add(Box.createRigidArea(new Dimension(5, 0)));
 		}
 
-		if (Utilities.isNotBlank(selectNoneButtonText)) {
+		if (StringUtilities.isNotBlank(selectNoneButtonText)) {
 			final JButton selectNoneButton = new JButton(selectNoneButtonText);
 			selectNoneButton.addActionListener(new ActionListener() {
 				@Override
@@ -219,7 +220,7 @@ public class SelectableTableDialog extends ModalDialog<Boolean> {
 
 		panel.add(Box.createRigidArea(new Dimension(0, 5)));
 		panel.add(tablePanel);
-		if (Utilities.isNotBlank(selectAllButtonText) || Utilities.isNotBlank(selectNoneButtonText)) {
+		if (StringUtilities.isNotBlank(selectAllButtonText) || StringUtilities.isNotBlank(selectNoneButtonText)) {
 			panel.add(buttonPanel1);
 			panel.add(Box.createRigidArea(new Dimension(0, 5)));
 		}

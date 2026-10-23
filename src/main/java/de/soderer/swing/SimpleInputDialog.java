@@ -27,7 +27,7 @@ import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
 import de.soderer.utilities.LangResources;
-import de.soderer.utilities.Utilities;
+import de.soderer.utilities.StringUtilities;
 
 /**
  * Modal dialog with a text and a single input field.
@@ -123,7 +123,7 @@ public class SimpleInputDialog extends ModalDialog<String> {
 	 * @param patternString regular expression, blank for no restriction
 	 */
 	public void setInputPattern(final String patternString) {
-		if (Utilities.isBlank(patternString)) {
+		if (StringUtilities.isBlank(patternString)) {
 			inputPattern = null;
 		} else {
 			inputPattern = Pattern.compile(patternString);
@@ -151,7 +151,7 @@ public class SimpleInputDialog extends ModalDialog<String> {
 		panel.add(Box.createRigidArea(new Dimension(5, 5)));
 
 		JScrollPane textScrollpane = null;
-		if (Utilities.isNotBlank(text)) {
+		if (StringUtilities.isNotBlank(text)) {
 			final JTextArea textField = new JTextArea();
 			final Font f = textField.getFont();
 			textField.setFont(new Font(Font.DIALOG, f.getStyle(), f.getSize()));
@@ -272,7 +272,7 @@ public class SimpleInputDialog extends ModalDialog<String> {
 
 	private void checkButtonStatus() {
 		if (okButton != null) {
-			okButton.setEnabled(Utilities.isNotEmpty(inputField.getText()));
+			okButton.setEnabled(StringUtilities.isNotEmpty(inputField.getText()));
 		}
 	}
 

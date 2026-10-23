@@ -76,9 +76,10 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
-import de.soderer.utilities.Utilities;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
+
+import de.soderer.utilities.StringUtilities;
 
 /**
  * A Swing combo with autocomplete support.
@@ -1589,7 +1590,7 @@ public class DropDown extends JPanel {
 
 		updating = true;
 		try {
-			if (Utilities.isEmpty(input)) {
+			if (StringUtilities.isEmpty(input)) {
 				writeContent("", 0, 0, normalColor, normalColor);
 				suggestionTailStart = -1;
 			} else {
@@ -2343,7 +2344,7 @@ public class DropDown extends JPanel {
 	 * Paints the hint text overlay while the field is empty.
 	 */
 	private void paintHint(final JTextPane pane, final Graphics g) {
-		if (Utilities.isEmpty(hintText) || pane.getDocument().getLength() > 0) {
+		if (StringUtilities.isEmpty(hintText) || pane.getDocument().getLength() > 0) {
 			return;
 		}
 
@@ -2379,7 +2380,7 @@ public class DropDown extends JPanel {
 					textWidth = Math.max(textWidth, fontMetrics.stringWidth(item));
 				}
 			}
-			if (!Utilities.isEmpty(hintText)) {
+			if (!StringUtilities.isEmpty(hintText)) {
 				textWidth = Math.max(textWidth, fontMetrics.stringWidth(hintText));
 			}
 		}
