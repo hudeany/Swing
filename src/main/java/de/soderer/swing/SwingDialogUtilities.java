@@ -23,10 +23,11 @@ public final class SwingDialogUtilities {
 
 	/**
 	 * Index of the last entry of a recent list. The latest used entry is always
-	 * moved to the end (see moveToEnd()), so this entry is preselected in the
-	 * ComboSelectionDialog.
+	 * moved to the end (see {@link #moveToEnd(UniqueFifoQueuedList, String)}), so
+	 * this entry is preselected in the ComboSelectionDialog.
 	 *
-	 * @return index of the last entry, or -1 if the list is empty
+	 * @param recentEntries the list of recent entries, or {@code null}
+	 * @return index of the last entry, or -1 if the list is empty or {@code null}
 	 */
 	public static int getLastEntryIndex(final UniqueFifoQueuedList<String> recentEntries) {
 		return recentEntries == null ? -1 : recentEntries.size() - 1;
@@ -38,6 +39,9 @@ public final class SwingDialogUtilities {
 	 * The list is rebuilt explicitly, because adding an already contained entry
 	 * to the unique list does not necessarily change its position. If the list
 	 * is full, a new entry pushes out the first (oldest) entry.
+	 *
+	 * @param recentEntries the list of recent entries to update
+	 * @param entry the entry to move to the end
 	 */
 	public static void moveToEnd(final UniqueFifoQueuedList<String> recentEntries, final String entry) {
 		final List<String> entries = new ArrayList<>(recentEntries);
@@ -52,6 +56,7 @@ public final class SwingDialogUtilities {
 	 * existing parent directory. Handles file paths, paths that do not exist
 	 * anymore and paths starting with "~".
 	 *
+	 * @param path the path to check
 	 * @return the directory, or null if the path is blank or no parent exists
 	 */
 	public static File getNearestExistingDirectory(final String path) {
@@ -68,6 +73,9 @@ public final class SwingDialogUtilities {
 	/**
 	 * Shows a file chooser to open a file.
 	 *
+	 * @param parent the component over which the file chooser is shown
+	 * @param title the dialog title
+	 * @param initialDirectory the initial directory path
 	 * @param fileExtensions optional extension filters (without dot), e.g. "xlsx"
 	 * @return the selected file or null if canceled
 	 */
@@ -84,6 +92,11 @@ public final class SwingDialogUtilities {
 	/**
 	 * Shows a file chooser to select a file to save to.
 	 *
+	 * @param parent the component over which the file chooser is shown
+	 * @param title the dialog title
+	 * @param initialDirectory the initial directory path
+	 * @param proposedFileName the proposed file name
+	 * @param fileExtensions optional extension filters (without dot), e.g. "xlsx"
 	 * @return the selected file or null if canceled
 	 */
 	public static File chooseFileToSave(final Component parent, final String title, final String initialDirectory, final String proposedFileName, final String... fileExtensions) {
@@ -105,6 +118,9 @@ public final class SwingDialogUtilities {
 	 * within its parent directory and is already selected, so choosing the same
 	 * directory again only needs a click on the approve button.
 	 *
+	 * @param parent the component over which the file chooser is shown
+	 * @param title the dialog title
+	 * @param initialDirectory the initial directory path
 	 * @return the selected directory or null if canceled
 	 */
 	public static File chooseDirectory(final Component parent, final String title, final String initialDirectory) {
@@ -125,7 +141,11 @@ public final class SwingDialogUtilities {
 
 	/**
 	 * Creates a file chooser that shows the complete path in an editable field
-	 * instead of the directory hierarchy combo box
+	 * instead of the directory hierarchy combo box.
+	 *
+	 * @param title the dialog title
+	 * @param fileExtensions optional extension filters (without dot), e.g. "xlsx"
+	 * @return the configured file chooser
 	 */
 	private static JFileChooser createFileChooser(final String title, final String... fileExtensions) {
 		final JFileChooser fileChooser = new PathFieldFileChooser().withPathLabelText(LangResources.get("path"));

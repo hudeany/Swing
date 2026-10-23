@@ -36,6 +36,8 @@ public final class ReadOnlyTextSupport {
 	/**
 	 * Installs the copy support on a read-only text component.
 	 *
+	 * @param <T>
+	 *            the type of the text component
 	 * @param textComponent
 	 *            text component, should not be editable
 	 * @return the given text component, for chaining
