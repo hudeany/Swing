@@ -124,17 +124,31 @@ public class SwingUtilities {
 	 * @param applicationName window manager class name of the application
 	 */
 	public static void setAwtWmClass(final String applicationName) {
-		if (SystemUtilities.isLinuxSystem()) {
-			try {
-				final Toolkit toolkit = Toolkit.getDefaultToolkit();
-				final Field awtAppClassNameField = toolkit.getClass().getDeclaredField("awtAppClassName");
-				awtAppClassNameField.setAccessible(true);
-				awtAppClassNameField.set(toolkit, applicationName);
-			} catch (final Exception e) {
-				// A module can only be opened by itself (or via the command line), so there is no programmatic fallback
-				System.err.println("Cannot set AWT WM_CLASS: " + e.getMessage());
-				System.err.println("Start the application with the java runtime option \"--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED\"");
+		if (!SystemUtilities.isLinuxSystem() || GraphicsEnvironment.isHeadless()) {
+			return;
+		}
+		try {
+			final Toolkit toolkit = Toolkit.getDefaultToolkit();
+			final Class<?> toolkitClass = toolkit.getClass();
+			if (!"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+				// Only the X11 toolkit (incl. XWayland) supports WM_CLASS
+				return;
 			}
+
+			final Module desktopModule = toolkitClass.getModule();
+			if (!desktopModule.isOpen("sun.awt.X11", SwingUtilities.class.getModule().getClass().getModule())
+					&& !desktopModule.isOpen("sun.awt.X11", SystemUtilities.class.getModule())) {
+				System.err.println("Cannot set AWT WM_CLASS: package sun.awt.X11 is not opened");
+				System.err.println("Add \"Add-Opens: java.desktop/sun.awt.X11\" to the jar manifest or start with \"--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED\"");
+				return;
+			}
+
+			final Field awtAppClassNameField = toolkitClass.getDeclaredField("awtAppClassName");
+			awtAppClassNameField.setAccessible(true);
+			// Field is static, so no instance is needed
+			awtAppClassNameField.set(null, applicationName);
+		} catch (final Exception e) {
+			System.err.println("Cannot set AWT WM_CLASS: " + e.getMessage());
 		}
 	}
 
