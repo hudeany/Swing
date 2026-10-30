@@ -18,7 +18,7 @@ import de.soderer.utilities.LangResources;
  * buttons to copy the text to the clipboard and to close the dialog. The text can also be selected and copied
  * partially (CTRL+C or context menu). Same API as {@link de.soderer.swing.ShowDataDialog}.
  */
-public class ShowDataDialog extends ModalDialogModern<Boolean> {
+public class ShowDataDialog extends ModalDialog<Boolean> {
 	/** Serialization version */
 	private static final long serialVersionUID = -6620913548730185529L;
 

@@ -33,7 +33,7 @@ import de.soderer.utilities.StringUtilities;
  * several buttons, otherwise {@link DialogStyle#INFORMATION}.
  * </p>
  */
-public class QuestionDialog extends ModalDialogModern<Integer> {
+public class QuestionDialog extends ModalDialog<Integer> {
 	/** Serialization version */
 	private static final long serialVersionUID = 4471923567819023045L;
 

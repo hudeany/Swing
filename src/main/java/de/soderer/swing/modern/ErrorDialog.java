@@ -45,7 +45,7 @@ import de.soderer.utilities.VisibleException;
  * given.
  * </p>
  */
-public class ErrorDialog extends ModalDialogModern<Boolean> {
+public class ErrorDialog extends ModalDialog<Boolean> {
 	/** Serialization version */
 	private static final long serialVersionUID = -4729150836604217397L;
 

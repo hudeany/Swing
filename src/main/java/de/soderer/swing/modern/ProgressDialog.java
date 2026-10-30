@@ -42,7 +42,7 @@ import de.soderer.utilities.worker.WorkerSimple;
  *
  * @param <T> type of the worker
  */
-public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialogModern<Result> implements WorkerParentSimple {
+public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Result> implements WorkerParentSimple {
 	/** Serialization version */
 	private static final long serialVersionUID = -3360518471235920418L;
 

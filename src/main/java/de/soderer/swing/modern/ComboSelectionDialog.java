@@ -22,7 +22,7 @@ import de.soderer.utilities.StringUtilities;
  * Same API as {@link de.soderer.swing.ComboSelectionDialog}.
  *
  * <p>
- * Uses {@link DropDownModern} with autocomplete. The entries can be reordered via drag&amp;drop and removed via the
+ * Uses {@link DropDown} with autocomplete. The entries can be reordered via drag&amp;drop and removed via the
  * Delete key in the popup list. Callers can take over those changes via {@link #getItems()} after the dialog was
  * closed, regardless of whether a value was selected or the dialog was canceled.
  * </p>
@@ -32,7 +32,7 @@ import de.soderer.utilities.StringUtilities;
  * canceled.
  * </p>
  */
-public class ComboSelectionDialog extends ModalDialogModern<String> {
+public class ComboSelectionDialog extends ModalDialog<String> {
 	/** Serialization version */
 	private static final long serialVersionUID = 5184092736511829073L;
 
@@ -40,7 +40,7 @@ public class ComboSelectionDialog extends ModalDialogModern<String> {
 	private static final int MIN_WIDTH = 360;
 
 	/** Selection with autocomplete, its items may be reordered and deleted by the user */
-	private final DropDownModern dropDown;
+	private final DropDown dropDown;
 
 	/** OK button, only enabled while a valid, non-empty value is selected */
 	private final JButton okButton;
@@ -94,10 +94,10 @@ public class ComboSelectionDialog extends ModalDialogModern<String> {
 
 		final List<String> itemList = items == null ? new ArrayList<>() : new ArrayList<>(items);
 
-		dropDown = new DropDownModern()
+		dropDown = new DropDown()
 				.withItems(itemList)
 				.withAllowCustomValues(false)
-				.withMatchMode(DropDownModern.MatchMode.CONTAINS)
+				.withMatchMode(DropDown.MatchMode.CONTAINS)
 				.withReorderable(true)
 				.withDeletable(true);
 		if (preselectedIndex >= 0 && preselectedIndex < itemList.size()) {

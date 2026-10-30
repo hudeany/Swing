@@ -34,7 +34,7 @@ import de.soderer.utilities.StringUtilities;
  * that would make the input not match the pattern.
  * </p>
  */
-public class SimpleInputDialog extends ModalDialogModern<String> {
+public class SimpleInputDialog extends ModalDialog<String> {
 	/** Serialization version */
 	private static final long serialVersionUID = -2091846612365079243L;
 

@@ -35,7 +35,7 @@ import de.soderer.swing.modern.ModernUi.ThemeIcon;
  *
  * @param <T> type of the value returned by {@link #open()}
  */
-public abstract class ModalDialogModern<T> extends JDialog {
+public abstract class ModalDialog<T> extends JDialog {
 	/** Serialization version */
 	private static final long serialVersionUID = 6812749537420982167L;
 
@@ -67,7 +67,7 @@ public abstract class ModalDialogModern<T> extends JDialog {
 	 * @param owner owner window, may be null
 	 * @param title title of the dialog, also shown in the header
 	 */
-	public ModalDialogModern(final Window owner, final String title) {
+	public ModalDialog(final Window owner, final String title) {
 		this(owner, title, null);
 	}
 
@@ -78,7 +78,7 @@ public abstract class ModalDialogModern<T> extends JDialog {
 	 * @param title    title of the dialog, also shown in the header
 	 * @param iconKind symbol shown in the header left of the title, null for none
 	 */
-	public ModalDialogModern(final Window owner, final String title, final IconKind iconKind) {
+	public ModalDialog(final Window owner, final String title, final IconKind iconKind) {
 		super(owner, title, ModalityType.DOCUMENT_MODAL);
 
 		// JDialog default is HIDE_ON_CLOSE: a dialog closed via the window decoration would keep its native resources

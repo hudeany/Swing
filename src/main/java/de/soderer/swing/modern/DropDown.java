@@ -28,7 +28,7 @@ import javax.swing.UIManager;
  * class.
  * </p>
  */
-public class DropDownModern extends de.soderer.swing.DropDown {
+public class DropDown extends de.soderer.swing.DropDown {
 	/** Serialization version */
 	private static final long serialVersionUID = -7120934681573309442L;
 
@@ -41,7 +41,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	/**
 	 * Creates a DropDown.
 	 */
-	public DropDownModern() {
+	public DropDown() {
 		super();
 
 		setSuggestionColor(SUGGESTION_COLOR);
@@ -165,7 +165,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withItems(final String... values) {
+	public DropDown withItems(final String... values) {
 		super.withItems(values);
 		return this;
 	}
@@ -177,7 +177,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withItems(final List<String> values) {
+	public DropDown withItems(final List<String> values) {
 		super.withItems(values);
 		return this;
 	}
@@ -189,7 +189,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withText(final String value) {
+	public DropDown withText(final String value) {
 		super.withText(value);
 		return this;
 	}
@@ -201,7 +201,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withAllowCustomValues(final boolean allowCustomValuesParam) {
+	public DropDown withAllowCustomValues(final boolean allowCustomValuesParam) {
 		super.withAllowCustomValues(allowCustomValuesParam);
 		return this;
 	}
@@ -213,7 +213,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withCaseSensitive(final boolean caseSensitiveValue) {
+	public DropDown withCaseSensitive(final boolean caseSensitiveValue) {
 		super.withCaseSensitive(caseSensitiveValue);
 		return this;
 	}
@@ -225,7 +225,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withMatchMode(final MatchMode matchModeValue) {
+	public DropDown withMatchMode(final MatchMode matchModeValue) {
 		super.withMatchMode(matchModeValue);
 		return this;
 	}
@@ -237,7 +237,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withReorderable(final boolean reorderableValue) {
+	public DropDown withReorderable(final boolean reorderableValue) {
 		super.withReorderable(reorderableValue);
 		return this;
 	}
@@ -249,7 +249,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withDeletable(final boolean deletableValue) {
+	public DropDown withDeletable(final boolean deletableValue) {
 		super.withDeletable(deletableValue);
 		return this;
 	}
@@ -261,7 +261,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withEnabled(final boolean enabled) {
+	public DropDown withEnabled(final boolean enabled) {
 		super.withEnabled(enabled);
 		return this;
 	}
@@ -273,7 +273,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withMessage(final String message) {
+	public DropDown withMessage(final String message) {
 		super.withMessage(message);
 		return this;
 	}
@@ -285,7 +285,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withColumns(final int columnsValue) {
+	public DropDown withColumns(final int columnsValue) {
 		super.withColumns(columnsValue);
 		return this;
 	}
@@ -297,7 +297,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withShowDropdownButton(final boolean show) {
+	public DropDown withShowDropdownButton(final boolean show) {
 		super.withShowDropdownButton(show);
 		return this;
 	}
@@ -310,7 +310,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withSuggestionColor(final Color suggestionColorValue) {
+	public DropDown withSuggestionColor(final Color suggestionColorValue) {
 		super.withSuggestionColor(suggestionColorValue);
 		return this;
 	}
@@ -322,7 +322,7 @@ public class DropDownModern extends de.soderer.swing.DropDown {
 	 * @return this instance
 	 */
 	@Override
-	public DropDownModern withInvalidColor(final Color invalidColorValue) {
+	public DropDown withInvalidColor(final Color invalidColorValue) {
 		super.withInvalidColor(invalidColorValue);
 		return this;
 	}

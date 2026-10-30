@@ -40,7 +40,7 @@ import de.soderer.utilities.StringUtilities;
  * The password confirmation field uses the language resource key {@code passwordConfirmation} for its label.
  * </p>
  */
-public class CredentialsDialog extends ModalDialogModern<Credentials> {
+public class CredentialsDialog extends ModalDialog<Credentials> {
 	/** Serialization version */
 	private static final long serialVersionUID = 7316024485910263788L;
 
