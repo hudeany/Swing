@@ -19,7 +19,10 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -30,20 +33,27 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
+import javax.swing.text.JTextComponent;
 
 /**
  * Small, dependency-free toolkit for a modern look of application main windows:
@@ -77,6 +87,7 @@ public final class ModernUi {
 	public static final Color DISABLED_BACKGROUND = new Color(0xE4E7ED);
 	public static final Color DISABLED_TEXT = new Color(0xA3A9B6);
 	public static final Color LOG_BACKGROUND = new Color(0xFAFBFD);
+	public static final Color READ_ONLY_BACKGROUND = new Color(0xF6F7FA);
 
 	private static final int CARD_ARC = 16;
 	private static final int BUTTON_ARC = 10;
@@ -87,7 +98,7 @@ public final class ModernUi {
 
 	/** Vector icons drawn with Java2D, so no image resources are needed */
 	public enum IconKind {
-		PHONE, SERVER, REFRESH, PLAY, STOP, CLOSE, LOG, SEARCH, FOLDER, GEAR, HELP, SEND, EXPORT, IMPORT, TRASH, FAST_FORWARD
+		PHONE, SERVER, REFRESH, PLAY, STOP, CLOSE, LOG, SEARCH, FOLDER, GEAR, HELP, SEND, EXPORT, IMPORT, TRASH, FAST_FORWARD, PLUS, FILE, LOCK
 	}
 
 	// ---------------------------------------------------------------- fonts and rendering
@@ -312,6 +323,31 @@ public final class ModernUi {
 							g2.fill(triangle);
 							g2.draw(triangle);
 						}
+					}
+					case PLUS -> {
+						g2.draw(new Line2D.Double(s * 0.5, s * 0.2, s * 0.5, s * 0.8));
+						g2.draw(new Line2D.Double(s * 0.2, s * 0.5, s * 0.8, s * 0.5));
+					}
+					case FILE -> {
+						final Path2D file = new Path2D.Double();
+						file.moveTo(s * 0.22, s * 0.08);
+						file.lineTo(s * 0.58, s * 0.08);
+						file.lineTo(s * 0.8, s * 0.3);
+						file.lineTo(s * 0.8, s * 0.92);
+						file.lineTo(s * 0.22, s * 0.92);
+						file.closePath();
+						g2.draw(file);
+						final Path2D fold = new Path2D.Double();
+						fold.moveTo(s * 0.58, s * 0.08);
+						fold.lineTo(s * 0.58, s * 0.3);
+						fold.lineTo(s * 0.8, s * 0.3);
+						g2.draw(fold);
+					}
+					case LOCK -> {
+						g2.draw(new RoundRectangle2D.Double(s * 0.18, s * 0.44, s * 0.64, s * 0.46, s * 0.12, s * 0.12));
+						g2.draw(new Arc2D.Double(s * 0.3, s * 0.1, s * 0.4, s * 0.5, 0, 180, Arc2D.OPEN));
+						g2.draw(new Line2D.Double(s * 0.3, s * 0.35, s * 0.3, s * 0.44));
+						g2.draw(new Line2D.Double(s * 0.7, s * 0.35, s * 0.7, s * 0.44));
 					}
 					default -> {
 						// nothing
@@ -674,6 +710,14 @@ public final class ModernUi {
 		}
 	}
 
+	/** Bold title of a section inside a card, e.g. "Request body" */
+	public static JLabel createSectionTitle(final String text) {
+		final JLabel label = new JLabel(text);
+		label.setFont(baseFont().deriveFont(Font.BOLD));
+		label.setForeground(TEXT);
+		return label;
+	}
+
 	/** Small grey text, e.g. for labels in front of input fields */
 	public static JLabel createMutedLabel(final String text) {
 		final JLabel label = new JLabel(text);
@@ -820,12 +864,19 @@ public final class ModernUi {
 	 * Thin inner border, white viewport and slim rounded scroll bars.
 	 */
 	public static void styleScrollPane(final JScrollPane scrollPane, final Color viewportBackground) {
-		scrollPane.setBorder(BorderFactory.createLineBorder(INNER_BORDER));
+		scrollPane.setBorder(new RoundedFieldBorder(4, 4));
 		scrollPane.setViewportBorder(null);
 		scrollPane.getViewport().setBackground(viewportBackground);
 		scrollPane.setBackground(viewportBackground);
-		styleScrollBar(scrollPane.getVerticalScrollBar(), viewportBackground);
-		styleScrollBar(scrollPane.getHorizontalScrollBar(), viewportBackground);
+		styleScrollBars(scrollPane, viewportBackground);
+	}
+
+	/**
+	 * Slim rounded scroll bars only, the border of the scroll pane is kept.
+	 */
+	public static void styleScrollBars(final JScrollPane scrollPane, final Color trackColor) {
+		styleScrollBar(scrollPane.getVerticalScrollBar(), trackColor);
+		styleScrollBar(scrollPane.getHorizontalScrollBar(), trackColor);
 	}
 
 	private static void styleScrollBar(final JScrollBar scrollBar, final Color trackColor) {
@@ -926,13 +977,130 @@ public final class ModernUi {
 	 * replaced; colors set explicitly by the application are kept.
 	 */
 	public static void blendIntoCard(final Component component) {
-		if (component instanceof final JPanel panel && panel.isOpaque() && panel.getBackground() instanceof UIResource) {
-			panel.setBackground(CARD);
+		if ((component instanceof JPanel || component instanceof JViewport) && component.isOpaque() && component.getBackground() instanceof UIResource) {
+			component.setBackground(CARD);
+		} else if (component instanceof JCheckBox || component instanceof JRadioButton) {
+			((JComponent) component).setOpaque(false);
 		}
 		if (component instanceof final Container container) {
 			for (final Component child : container.getComponents()) {
 				blendIntoCard(child);
 			}
 		}
+	}
+
+	// ---------------------------------------------------------------- input fields
+
+	/**
+	 * Rounded border with inner padding for text fields and scroll panes. Shows an accent colored outline
+	 * while an editable text component has the focus. The corners outside the rounded outline are filled
+	 * with the surrounding background, so the component's rectangular background does not show there.
+	 */
+	public static class RoundedFieldBorder extends AbstractBorder {
+		private static final long serialVersionUID = 1L;
+		private static final int ARC = 10;
+
+		private final int vertical;
+		private final int horizontal;
+		private final Component focusSource;
+
+		public RoundedFieldBorder(final int vertical, final int horizontal) {
+			this(vertical, horizontal, null);
+		}
+
+		/**
+		 * @param focusSource component whose focus decides the outline color, e.g. the text area inside a
+		 *                    scroll pane; null for the bordered component itself
+		 */
+		public RoundedFieldBorder(final int vertical, final int horizontal, final Component focusSource) {
+			this.vertical = vertical;
+			this.horizontal = horizontal;
+			this.focusSource = focusSource;
+		}
+
+		@Override
+		public Insets getBorderInsets(final Component component) {
+			return new Insets(vertical, horizontal, vertical, horizontal);
+		}
+
+		@Override
+		public Insets getBorderInsets(final Component component, final Insets insets) {
+			insets.set(vertical, horizontal, vertical, horizontal);
+			return insets;
+		}
+
+		@Override
+		public void paintBorder(final Component component, final Graphics graphics, final int x, final int y, final int width, final int height) {
+			final Graphics2D g2 = prepare(graphics);
+			try {
+				final RoundRectangle2D shape = new RoundRectangle2D.Double(x + 0.5, y + 0.5, width - 1.0, height - 1.0, ARC, ARC);
+				final Area corners = new Area(new Rectangle(x, y, width, height));
+				corners.subtract(new Area(shape));
+				g2.setColor(getSurroundingBackground(component));
+				g2.fill(corners);
+
+				final Component focusComponent = focusSource != null ? focusSource : component;
+				final boolean focused = focusComponent.isFocusOwner() && focusComponent.isEnabled()
+					&& (!(focusComponent instanceof final JTextComponent textComponent) || textComponent.isEditable());
+				g2.setColor(focused ? ACCENT : CARD_BORDER);
+				g2.setStroke(new BasicStroke(focused ? 1.5f : 1f));
+				g2.draw(shape);
+			} finally {
+				g2.dispose();
+			}
+		}
+
+		private static Color getSurroundingBackground(final Component component) {
+			Component parent = component.getParent();
+			while (parent != null) {
+				if (parent instanceof Card) {
+					return CARD;
+				} else if (parent.isOpaque()) {
+					return parent.getBackground();
+				}
+				parent = parent.getParent();
+			}
+			return CARD;
+		}
+	}
+
+	/**
+	 * Rounded text field with padding; read-only fields get a light grey background.
+	 */
+	public static void styleTextField(final JTextField textField, final boolean readOnly) {
+		textField.setBorder(new RoundedFieldBorder(5, 9));
+		textField.setOpaque(true);
+		textField.setBackground(readOnly ? READ_ONLY_BACKGROUND : Color.WHITE);
+		textField.setForeground(TEXT);
+		addFocusRepaint(textField, textField);
+	}
+
+	/**
+	 * Monospaced text area with padding in a rounded scroll pane, e.g. for request and response bodies.
+	 */
+	public static void styleTextArea(final JTextArea textArea, final JScrollPane scrollPane, final boolean readOnly) {
+		final Color background = readOnly ? READ_ONLY_BACKGROUND : Color.WHITE;
+		textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, baseFont().getSize()));
+		textArea.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+		textArea.setBackground(background);
+		textArea.setForeground(TEXT);
+		styleScrollPane(scrollPane, background);
+		// The scroll pane's outline shows the focus of the text area
+		scrollPane.setBorder(new RoundedFieldBorder(4, 4, textArea));
+		addFocusRepaint(textArea, scrollPane);
+	}
+
+	private static void addFocusRepaint(final JComponent focusComponent, final JComponent repaintComponent) {
+		focusComponent.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(final FocusEvent event) {
+				repaintComponent.repaint();
+			}
+
+			@Override
+			public void focusLost(final FocusEvent event) {
+				repaintComponent.repaint();
+			}
+		});
 	}
 }
