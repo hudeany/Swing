@@ -1449,7 +1449,7 @@ public final class ModernUi {
 
 	/**
 	 * Gives a text field a rounded border with padding and an accent colored outline while focused.
-	 * Read-only fields get a light grey background.
+	 * Read-only fields get a light grey background, editable fields get it while they are disabled.
 	 *
 	 * @param textField text field to style
 	 * @param readOnly  true for the read-only background
@@ -1457,8 +1457,14 @@ public final class ModernUi {
 	public static void styleTextField(final JTextField textField, final boolean readOnly) {
 		textField.setBorder(new RoundedFieldBorder(5, 9));
 		textField.setOpaque(true);
-		textField.setBackground(readOnly ? READ_ONLY_BACKGROUND : Color.WHITE);
 		textField.setForeground(TEXT);
+		textField.setDisabledTextColor(DISABLED_TEXT);
+		if (readOnly) {
+			textField.setBackground(READ_ONLY_BACKGROUND);
+		} else {
+			textField.setBackground(textField.isEnabled() ? Color.WHITE : READ_ONLY_BACKGROUND);
+			textField.addPropertyChangeListener("enabled", event -> textField.setBackground(textField.isEnabled() ? Color.WHITE : READ_ONLY_BACKGROUND));
+		}
 		addFocusRepaint(textField, textField);
 	}
 
@@ -1471,12 +1477,23 @@ public final class ModernUi {
 	 * @param readOnly   true for the read-only background
 	 */
 	public static void styleTextArea(final JTextArea textArea, final JScrollPane scrollPane, final boolean readOnly) {
-		final Color background = readOnly ? READ_ONLY_BACKGROUND : Color.WHITE;
+		final Color background = readOnly || !textArea.isEnabled() ? READ_ONLY_BACKGROUND : Color.WHITE;
 		textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, baseFont().getSize()));
 		textArea.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
 		textArea.setBackground(background);
 		textArea.setForeground(TEXT);
+		textArea.setDisabledTextColor(DISABLED_TEXT);
 		styleScrollPane(scrollPane, background);
+		if (!readOnly) {
+			// Editable areas get the read-only background while they are disabled
+			textArea.addPropertyChangeListener("enabled", event -> {
+				final Color newBackground = textArea.isEnabled() ? Color.WHITE : READ_ONLY_BACKGROUND;
+				textArea.setBackground(newBackground);
+				scrollPane.getViewport().setBackground(newBackground);
+				scrollPane.setBackground(newBackground);
+				scrollPane.repaint();
+			});
+		}
 		// The scroll pane's outline shows the focus of the text area
 		scrollPane.setBorder(new RoundedFieldBorder(4, 4, textArea));
 		addFocusRepaint(textArea, scrollPane);
