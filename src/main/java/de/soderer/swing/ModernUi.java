@@ -42,6 +42,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
@@ -53,6 +54,8 @@ import javax.swing.plaf.basic.BasicProgressBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -118,6 +121,10 @@ public final class ModernUi {
 	public static final Color LOG_BACKGROUND = new Color(0xFAFBFD);
 	/** Background of read-only input fields */
 	public static final Color READ_ONLY_BACKGROUND = new Color(0xF6F7FA);
+	/** Background of every second table row */
+	public static final Color TABLE_ALTERNATE_ROW = new Color(0xF8F9FC);
+	/** Background of table headers */
+	public static final Color TABLE_HEADER_BACKGROUND = new Color(0xF3F5F9);
 
 	/** Corner diameter of cards */
 	private static final int CARD_ARC = 16;
@@ -168,7 +175,9 @@ public final class ModernUi {
 		/** Document with folded corner */
 		FILE,
 		/** Padlock for security and authentication */
-		LOCK
+		LOCK,
+		/** Globe for languages and translations */
+		GLOBE
 	}
 
 	// ---------------------------------------------------------------- fonts and rendering
@@ -483,6 +492,11 @@ public final class ModernUi {
 						g2.draw(new Line2D.Double(s * 0.3, s * 0.35, s * 0.3, s * 0.44));
 						g2.draw(new Line2D.Double(s * 0.7, s * 0.35, s * 0.7, s * 0.44));
 					}
+					case GLOBE -> {
+						g2.draw(new Ellipse2D.Double(s * 0.1, s * 0.1, s * 0.8, s * 0.8));
+						g2.draw(new Ellipse2D.Double(s * 0.32, s * 0.1, s * 0.36, s * 0.8));
+						g2.draw(new Line2D.Double(s * 0.1, s * 0.5, s * 0.9, s * 0.5));
+					}
 					default -> {
 						// nothing
 					}
@@ -504,7 +518,9 @@ public final class ModernUi {
 		/** White button with red text and border, e.g. for cancel */
 		DANGEROUS,
 		/** Transparent button on the gradient header */
-		HEADER
+		HEADER,
+		/** Transparent button for toolbars inside cards, light accent background on hover */
+		TOOLBAR
 	}
 
 	/**
@@ -632,6 +648,13 @@ public final class ModernUi {
 						g2.setColor(enabled ? withAlpha(DANGER, hover ? 200 : 140) : CARD_BORDER);
 						g2.draw(shape);
 						foreground = enabled ? DANGER : DISABLED_TEXT;
+					}
+					case TOOLBAR -> {
+						if (enabled && (hover || pressed)) {
+							g2.setColor(pressed ? mix(ACCENT_LIGHT, ACCENT, 0.15) : ACCENT_LIGHT);
+							g2.fill(shape);
+						}
+						foreground = enabled ? TEXT : DISABLED_TEXT;
 					}
 					case HEADER -> {
 						if (enabled && (hover || pressed)) {
@@ -937,6 +960,48 @@ public final class ModernUi {
 		final JLabel label = new JLabel(text);
 		label.setForeground(MUTED);
 		return label;
+	}
+
+	/**
+	 * Creates a thin vertical line separating groups of toolbar buttons.
+	 *
+	 * @return the separator component, 9 pixels wide and 24 pixels high
+	 */
+	public static JComponent createToolbarSeparator() {
+		return new JComponent() {
+			/** Serialization version */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(9, 24);
+			}
+
+			@Override
+			protected void paintComponent(final Graphics graphics) {
+				graphics.setColor(CARD_BORDER);
+				final int x = getWidth() / 2;
+				graphics.drawLine(x, 4, x, getHeight() - 5);
+			}
+		};
+	}
+
+	/**
+	 * Creates a transparent square toolbar button showing an image icon, e.g. from the application's resources.
+	 * The text is used as tooltip and accessible name.
+	 *
+	 * @param icon icon to show, painted translucent while the button is disabled
+	 * @param text tooltip and accessible name
+	 * @param size width and height in pixels
+	 * @return the button
+	 */
+	public static ModernButton createToolbarButton(final Icon icon, final String text, final int size) {
+		final ModernButton button = new ModernButton(null, null, ButtonStyle.TOOLBAR);
+		button.setIcon(icon);
+		button.setToolTipText(text);
+		button.getAccessibleContext().setAccessibleName(text);
+		button.setPreferredSize(new Dimension(size, size));
+		return button;
 	}
 
 	// ---------------------------------------------------------------- chips
@@ -1391,6 +1456,95 @@ public final class ModernUi {
 		// The scroll pane's outline shows the focus of the text area
 		scrollPane.setBorder(new RoundedFieldBorder(4, 4, textArea));
 		addFocusRepaint(textArea, scrollPane);
+	}
+
+	/**
+	 * Gives a text area the look of a single line text field (rounded border, padding, focus outline),
+	 * e.g. for values which may contain line breaks. The font is not changed.
+	 *
+	 * @param textArea text area to style
+	 */
+	public static void styleTextAreaAsField(final JTextArea textArea) {
+		textArea.setBorder(new RoundedFieldBorder(5, 9));
+		textArea.setOpaque(true);
+		textArea.setBackground(Color.WHITE);
+		textArea.setForeground(TEXT);
+		addFocusRepaint(textArea, textArea);
+	}
+
+	// ---------------------------------------------------------------- tables
+
+	/**
+	 * Gives a table more row height, light grid lines, a light accent selection and a flat header
+	 * (see {@link TableHeaderRenderer}). Install own header renderers after calling this, they can wrap
+	 * the flat renderer via {@code getDefaultRenderer()}.
+	 *
+	 * @param table table to style
+	 */
+	public static void styleTable(final JTable table) {
+		table.setRowHeight(Math.max(table.getRowHeight(), table.getFontMetrics(table.getFont()).getHeight() + 8));
+		table.setGridColor(INNER_BORDER);
+		table.setBackground(CARD);
+		table.setForeground(TEXT);
+		table.setSelectionBackground(ACCENT_LIGHT);
+		table.setSelectionForeground(TEXT);
+		final JTableHeader header = table.getTableHeader();
+		if (header != null) {
+			header.setFont(baseFont().deriveFont(Font.BOLD));
+			header.setBackground(TABLE_HEADER_BACKGROUND);
+			header.setForeground(MUTED);
+			header.setDefaultRenderer(new TableHeaderRenderer());
+		}
+	}
+
+	/**
+	 * Returns the background of a not selected table row: white and {@link #TABLE_ALTERNATE_ROW} alternating.
+	 * Can be used in an overridden {@code JTable.prepareRenderer()} for striped rows.
+	 *
+	 * @param row view index of the row
+	 * @return the row background
+	 */
+	public static Color getStripedRowBackground(final int row) {
+		return row % 2 == 0 ? CARD : TABLE_ALTERNATE_ROW;
+	}
+
+	/**
+	 * Flat table header cell: bold grey text on a light background with thin separator lines.
+	 */
+	public static class TableHeaderRenderer extends DefaultTableCellRenderer {
+		/** Serialization version */
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * Creates the renderer with centered texts.
+		 */
+		public TableHeaderRenderer() {
+			setHorizontalAlignment(SwingConstants.CENTER);
+			setOpaque(true);
+		}
+
+		/**
+		 * Configures the renderer for a header cell. Selection and focus are not shown in the header.
+		 *
+		 * @param table      the table, may be null
+		 * @param value      the column name
+		 * @param isSelected ignored
+		 * @param hasFocus   ignored
+		 * @param row        the row index (-1 for the header)
+		 * @param column     the view index of the column
+		 * @return this renderer
+		 */
+		@Override
+		public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+			super.getTableCellRendererComponent(table, value, false, false, row, column);
+			setFont(table != null && table.getTableHeader() != null ? table.getTableHeader().getFont() : baseFont().deriveFont(Font.BOLD));
+			setForeground(MUTED);
+			setBackground(TABLE_HEADER_BACKGROUND);
+			setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createMatteBorder(0, 0, 1, 1, CARD_BORDER),
+				BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+			return this;
+		}
 	}
 
 	/**
