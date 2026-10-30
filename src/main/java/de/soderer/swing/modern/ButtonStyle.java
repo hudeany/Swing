@@ -1,5 +1,7 @@
 package de.soderer.swing.modern;
 
+import de.soderer.swing.modern.ModernUi.ModernButton;
+
 /** Color variants of {@link ModernButton} */
 public enum ButtonStyle {
 	/** Filled accent button for the main action */
