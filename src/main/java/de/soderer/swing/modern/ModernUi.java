@@ -1,4 +1,4 @@
-package de.soderer.swing;
+package de.soderer.swing.modern;
 
 import java.awt.Adjustable;
 import java.awt.AlphaComposite;
@@ -121,6 +121,14 @@ public final class ModernUi {
 	public static final Color LOG_BACKGROUND = new Color(0xFAFBFD);
 	/** Background of read-only input fields */
 	public static final Color READ_ONLY_BACKGROUND = new Color(0xF6F7FA);
+	/** Left color of the header gradient for errors */
+	public static final Color DANGER_HEADER_START = new Color(0xD64545);
+	/** Right color of the header gradient for errors */
+	public static final Color DANGER_HEADER_END = new Color(0xB03A78);
+	/** Left color of the header gradient for warnings */
+	public static final Color WARNING_HEADER_START = new Color(0xD9822B);
+	/** Right color of the header gradient for warnings */
+	public static final Color WARNING_HEADER_END = new Color(0xC2562F);
 	/** Background of every second table row */
 	public static final Color TABLE_ALTERNATE_ROW = new Color(0xF8F9FC);
 	/** Background of table headers */
@@ -134,50 +142,6 @@ public final class ModernUi {
 	/** Utility class, no instances */
 	private ModernUi() {
 		// Utility class
-	}
-
-	/** Vector icons drawn with Java2D, so no image resources are needed */
-	public enum IconKind {
-		/** Mobile phone */
-		PHONE,
-		/** Two stacked server units */
-		SERVER,
-		/** Circular arrow for refresh or reload */
-		REFRESH,
-		/** Filled triangle for start */
-		PLAY,
-		/** Filled square for stop or cancel */
-		STOP,
-		/** Cross for close or remove */
-		CLOSE,
-		/** Text lines for logs or lists */
-		LOG,
-		/** Magnifying glass */
-		SEARCH,
-		/** Folder outline */
-		FOLDER,
-		/** Gear wheel for configuration */
-		GEAR,
-		/** Question mark in a circle */
-		HELP,
-		/** Paper plane for sending */
-		SEND,
-		/** Arrow up out of a tray */
-		EXPORT,
-		/** Arrow down into a tray */
-		IMPORT,
-		/** Trash can for delete */
-		TRASH,
-		/** Two triangles for multiple or repeated runs */
-		FAST_FORWARD,
-		/** Plus sign for add */
-		PLUS,
-		/** Document with folded corner */
-		FILE,
-		/** Padlock for security and authentication */
-		LOCK,
-		/** Globe for languages and translations */
-		GLOBE
 	}
 
 	// ---------------------------------------------------------------- fonts and rendering
@@ -497,6 +461,56 @@ public final class ModernUi {
 						g2.draw(new Ellipse2D.Double(s * 0.32, s * 0.1, s * 0.36, s * 0.8));
 						g2.draw(new Line2D.Double(s * 0.1, s * 0.5, s * 0.9, s * 0.5));
 					}
+					case INFO, ERROR -> {
+						g2.draw(new Ellipse2D.Double(s * 0.08, s * 0.08, s * 0.84, s * 0.84));
+						final double dot = s * 0.13;
+						if (kind == IconKind.INFO) {
+							g2.fill(new Ellipse2D.Double(s * 0.5 - dot / 2, s * 0.27 - dot / 2, dot, dot));
+							g2.draw(new Line2D.Double(s * 0.5, s * 0.44, s * 0.5, s * 0.72));
+						} else {
+							g2.draw(new Line2D.Double(s * 0.5, s * 0.26, s * 0.5, s * 0.54));
+							g2.fill(new Ellipse2D.Double(s * 0.5 - dot / 2, s * 0.71 - dot / 2, dot, dot));
+						}
+					}
+					case WARNING -> {
+						final Path2D triangle = new Path2D.Double();
+						triangle.moveTo(s * 0.5, s * 0.08);
+						triangle.lineTo(s * 0.94, s * 0.88);
+						triangle.lineTo(s * 0.06, s * 0.88);
+						triangle.closePath();
+						g2.draw(triangle);
+						g2.draw(new Line2D.Double(s * 0.5, s * 0.38, s * 0.5, s * 0.6));
+						final double dot = s * 0.12;
+						g2.fill(new Ellipse2D.Double(s * 0.5 - dot / 2, s * 0.74 - dot / 2, dot, dot));
+					}
+					case EDIT -> {
+						final Path2D pencil = new Path2D.Double();
+						pencil.moveTo(s * 0.64, s * 0.14);
+						pencil.lineTo(s * 0.86, s * 0.36);
+						pencil.lineTo(s * 0.36, s * 0.86);
+						pencil.lineTo(s * 0.14, s * 0.86);
+						pencil.lineTo(s * 0.14, s * 0.64);
+						pencil.closePath();
+						g2.draw(pencil);
+						g2.draw(new Line2D.Double(s * 0.54, s * 0.24, s * 0.76, s * 0.46));
+					}
+					case COPY -> {
+						g2.draw(new RoundRectangle2D.Double(s * 0.12, s * 0.3, s * 0.54, s * 0.6, s * 0.12, s * 0.12));
+						final Path2D back = new Path2D.Double();
+						back.moveTo(s * 0.34, s * 0.3);
+						back.lineTo(s * 0.34, s * 0.1);
+						back.lineTo(s * 0.88, s * 0.1);
+						back.lineTo(s * 0.88, s * 0.7);
+						back.lineTo(s * 0.66, s * 0.7);
+						g2.draw(back);
+					}
+					case CHECK -> {
+						final Path2D check = new Path2D.Double();
+						check.moveTo(s * 0.16, s * 0.52);
+						check.lineTo(s * 0.4, s * 0.76);
+						check.lineTo(s * 0.86, s * 0.26);
+						g2.draw(check);
+					}
 					default -> {
 						// nothing
 					}
@@ -731,6 +745,11 @@ public final class ModernUi {
 		/** Serialization version */
 		private static final long serialVersionUID = 1L;
 
+		/** Left color of the gradient */
+		private Color startColor = HEADER_START;
+		/** Right color of the gradient */
+		private Color endColor = HEADER_END;
+
 		/**
 		 * Creates the header with a BorderLayout (e.g. logo WEST, title CENTER, buttons EAST) and inner padding.
 		 */
@@ -740,13 +759,25 @@ public final class ModernUi {
 			setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 14));
 		}
 
+		/**
+		 * Changes the gradient colors, e.g. to {@link #DANGER_HEADER_START} and {@link #DANGER_HEADER_END} for errors.
+		 *
+		 * @param start left color of the gradient
+		 * @param end   right color of the gradient
+		 */
+		public void setColors(final Color start, final Color end) {
+			startColor = start;
+			endColor = end;
+			repaint();
+		}
+
 		@Override
 		protected void paintComponent(final Graphics graphics) {
 			final Graphics2D g2 = prepare(graphics);
 			try {
 				final int width = getWidth();
 				final int height = getHeight();
-				g2.setPaint(new GradientPaint(0, 0, HEADER_START, width, height, HEADER_END));
+				g2.setPaint(new GradientPaint(0, 0, startColor, width, height, endColor));
 				g2.fillRect(0, 0, width, height);
 				g2.setColor(withAlpha(Color.WHITE, 18));
 				g2.fill(new Ellipse2D.Double(width * 0.62, -height * 1.2, height * 2.6, height * 2.6));
