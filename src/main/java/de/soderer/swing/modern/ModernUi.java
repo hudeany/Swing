@@ -70,7 +70,7 @@ import javax.swing.text.JTextComponent;
  *
  * <p>
  * Typical usage: put a {@link GradientHeader} at the top of the window, place the content in {@link Card}s
- * on a {@link #BACKGROUND} colored panel, use {@link ModernButton}s for actions and call
+ * on a {@link #BACKGROUND} colored panel, use {@link Button}s for actions and call
  * {@link #blendIntoCard(Component)} for existing components placed inside a card.
  * </p>
  */
@@ -238,7 +238,7 @@ public final class ModernUi {
 	// ---------------------------------------------------------------- icons
 
 	/**
-	 * Simple line icon in a fixed color. {@link ModernButton} repaints it in the button's text color.
+	 * Simple line icon in a fixed color. {@link Button} repaints it in the button's text color.
 	 */
 	public static class ThemeIcon implements Icon {
 		/** Symbol to draw */
@@ -533,7 +533,7 @@ public final class ModernUi {
 	/**
 	 * Flat rounded button with hover and pressed effect, painted completely by itself.
 	 */
-	public static class ModernButton extends JButton {
+	public static class Button extends JButton {
 		/** Serialization version */
 		private static final long serialVersionUID = 1L;
 
@@ -547,7 +547,7 @@ public final class ModernUi {
 		 * @param iconKind symbol shown left of the text in the text color, null for none
 		 * @param style    color variant
 		 */
-		public ModernButton(final String text, final IconKind iconKind, final ButtonStyle style) {
+		public Button(final String text, final IconKind iconKind, final ButtonStyle style) {
 			super(text);
 			this.style = style;
 			if (iconKind != null) {
@@ -1019,8 +1019,8 @@ public final class ModernUi {
 	 * @param size width and height in pixels
 	 * @return the button
 	 */
-	public static ModernButton createToolbarButton(final Icon icon, final String text, final int size) {
-		final ModernButton button = new ModernButton(null, null, ButtonStyle.TOOLBAR);
+	public static Button createToolbarButton(final Icon icon, final String text, final int size) {
+		final Button button = new Button(null, null, ButtonStyle.TOOLBAR);
 		button.setIcon(icon);
 		button.setToolTipText(text);
 		button.getAccessibleContext().setAccessibleName(text);

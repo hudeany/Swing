@@ -1,8 +1,8 @@
 package de.soderer.swing.modern;
 
-import de.soderer.swing.modern.ModernUi.ModernButton;
+import de.soderer.swing.modern.ModernUi.Button;
 
-/** Color variants of {@link ModernButton} */
+/** Color variants of {@link Button} */
 public enum ButtonStyle {
 	/** Filled accent button for the main action */
 	PRIMARY,

@@ -10,7 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import de.soderer.swing.modern.ModernUi.ModernButton;
+import de.soderer.swing.modern.ModernUi.Button;
 import de.soderer.utilities.LangResources;
 
 /**
@@ -54,7 +54,7 @@ public class ShowDataDialog extends ModalDialog<Boolean> {
 		getContentArea().add(textScrollPane, BorderLayout.CENTER);
 
 		// Always copies the complete text, a partial selection is copied via CTRL+C or the context menu
-		final ModernButton copyButton = addLeftButton(LangResources.get("copyToClipboard"), IconKind.COPY, ButtonStyle.SECONDARY, null);
+		final Button copyButton = addLeftButton(LangResources.get("copyToClipboard"), IconKind.COPY, ButtonStyle.SECONDARY, null);
 		copyButton.addActionListener(event -> TextSupport.copyToClipboard(textArea.getText(), copyButton));
 
 		final JButton closeButton = addButton(LangResources.get("close"), null, ButtonStyle.PRIMARY, event -> {

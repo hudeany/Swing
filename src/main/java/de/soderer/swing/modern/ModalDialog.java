@@ -14,7 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import de.soderer.swing.modern.ModernUi.ModernButton;
+import de.soderer.swing.modern.ModernUi.Button;
 import de.soderer.swing.modern.ModernUi.ThemeIcon;
 
 /**
@@ -202,7 +202,7 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param actionListener action of the button, may be null
 	 * @return the new button
 	 */
-	protected ModernButton addButton(final String text, final IconKind iconKind, final ButtonStyle style, final ActionListener actionListener) {
+	protected Button addButton(final String text, final IconKind iconKind, final ButtonStyle style, final ActionListener actionListener) {
 		return addButton(rightButtonBar, text, iconKind, style, actionListener);
 	}
 
@@ -215,7 +215,7 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param actionListener action of the button, may be null
 	 * @return the new button
 	 */
-	protected ModernButton addLeftButton(final String text, final IconKind iconKind, final ButtonStyle style, final ActionListener actionListener) {
+	protected Button addLeftButton(final String text, final IconKind iconKind, final ButtonStyle style, final ActionListener actionListener) {
 		return addButton(leftButtonBar, text, iconKind, style, actionListener);
 	}
 
@@ -229,8 +229,8 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param actionListener action of the button, may be null
 	 * @return the new button
 	 */
-	private static ModernButton addButton(final JPanel buttonGroup, final String text, final IconKind iconKind, final ButtonStyle style, final ActionListener actionListener) {
-		final ModernButton button = createButton(text, iconKind, style);
+	private static Button addButton(final JPanel buttonGroup, final String text, final IconKind iconKind, final ButtonStyle style, final ActionListener actionListener) {
+		final Button button = createButton(text, iconKind, style);
 		if (actionListener != null) {
 			button.addActionListener(actionListener);
 		}
@@ -246,8 +246,8 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param style    color variant
 	 * @return the new button
 	 */
-	public static ModernButton createButton(final String text, final IconKind iconKind, final ButtonStyle style) {
-		final ModernButton button = new ModernButton(text, iconKind, style);
+	public static Button createButton(final String text, final IconKind iconKind, final ButtonStyle style) {
+		final Button button = new Button(text, iconKind, style);
 		final Dimension preferredSize = button.getPreferredSize();
 		if (preferredSize.width < MIN_BUTTON_WIDTH) {
 			button.setPreferredSize(new Dimension(MIN_BUTTON_WIDTH, preferredSize.height));

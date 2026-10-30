@@ -23,7 +23,7 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
-import de.soderer.swing.modern.ModernUi.ModernButton;
+import de.soderer.swing.modern.ModernUi.Button;
 import de.soderer.utilities.ExceptionUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
@@ -75,7 +75,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 	private final transient Throwable throwable;
 
 	/** Button toggling the details, its text shows whether the details are expanded */
-	private ModernButton detailButton;
+	private Button detailButton;
 
 	/** Panel holding the summary and the stack trace while the details are shown */
 	private JPanel detailPanel;
@@ -149,17 +149,17 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 		getContentArea().add(detailPanel, BorderLayout.CENTER);
 
 		if (StringUtilities.isNotBlank(emailRecipient)) {
-			final ModernButton mailButton = addLeftButton(LangResources.get("openMail"), IconKind.SEND, ButtonStyle.SECONDARY, null);
+			final Button mailButton = addLeftButton(LangResources.get("openMail"), IconKind.SEND, ButtonStyle.SECONDARY, null);
 			mailButton.addActionListener(event -> openMail(mailButton));
 		}
 
 		// Copies the complete error (title, message and stack trace), e.g. for pasting into a text editor or a bug report
-		final ModernButton copyButton = addLeftButton(LangResources.get("copyToClipboard"), IconKind.COPY, ButtonStyle.SECONDARY, null);
+		final Button copyButton = addLeftButton(LangResources.get("copyToClipboard"), IconKind.COPY, ButtonStyle.SECONDARY, null);
 		copyButton.addActionListener(event -> TextSupport.copyToClipboard(getClipboardText(), copyButton));
 
 		detailButton = addLeftButton(LangResources.get("detailsMore"), IconKind.LOG, ButtonStyle.SECONDARY, event -> toggleDetails());
 
-		final ModernButton closeButton = addButton(LangResources.get("close"), null, ButtonStyle.PRIMARY, event -> dispose());
+		final Button closeButton = addButton(LangResources.get("close"), null, ButtonStyle.PRIMARY, event -> dispose());
 		getRootPane().setDefaultButton(closeButton);
 
 		pack();
@@ -206,7 +206,7 @@ public class ErrorDialog extends ModalDialog<Boolean> {
 	 *
 	 * @param mailButton button that triggered the email, disabled meanwhile
 	 */
-	private void openMail(final ModernButton mailButton) {
+	private void openMail(final Button mailButton) {
 		mailButton.setEnabled(false);
 		final String subject = "Error in " + applicationName + (StringUtilities.isNotBlank(applicationVersion) ? " (" + applicationVersion + ")" : "");
 		final URI mailtoUri = createMailtoUri(emailRecipient, subject, getErrorDetails());

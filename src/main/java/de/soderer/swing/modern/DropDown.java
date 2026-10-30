@@ -69,7 +69,7 @@ public class DropDown extends de.soderer.swing.DropDown {
 	 */
 	@Override
 	protected JButton createDropdownButton() {
-		final ModernUi.ModernButton button = new ModernUi.ModernButton(null, null, ButtonStyle.TOOLBAR);
+		final ModernUi.Button button = new ModernUi.Button(null, null, ButtonStyle.TOOLBAR);
 		button.setIcon(new ModernUi.ThemeIcon(IconKind.CHEVRON_DOWN, 14, ModernUi.MUTED));
 		button.setBorder(BorderFactory.createEmptyBorder());
 		// The height follows the input field (BorderLayout), only the width matters
