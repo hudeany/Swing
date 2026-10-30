@@ -23,7 +23,6 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.swing.modern.ModernUi.ModernButton;
 import de.soderer.utilities.ExceptionUtilities;
 import de.soderer.utilities.LangResources;
@@ -46,7 +45,7 @@ import de.soderer.utilities.VisibleException;
  * given.
  * </p>
  */
-public class ErrorDialog extends ModalDialog<Boolean> {
+public class ErrorDialog extends ModalDialogModern<Boolean> {
 	/** Serialization version */
 	private static final long serialVersionUID = -4729150836604217397L;
 

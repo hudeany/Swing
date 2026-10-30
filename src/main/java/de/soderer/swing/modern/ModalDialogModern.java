@@ -14,8 +14,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.swing.modern.ModernUi.ModernButton;
+import de.soderer.swing.modern.ModernUi.ThemeIcon;
 
 /**
  * Base class of document modal dialogs in the {@link ModernUi} design that return a value.
@@ -35,22 +35,12 @@ import de.soderer.swing.modern.ModernUi.ModernButton;
  *
  * @param <T> type of the value returned by {@link #open()}
  */
-public abstract class ModalDialog<T> extends JDialog {
+public abstract class ModalDialogModern<T> extends JDialog {
 	/** Serialization version */
 	private static final long serialVersionUID = 6812749537420982167L;
 
 	/** Minimum width of buttons in the button bar, so short texts like "OK" do not get tiny buttons */
 	private static final int MIN_BUTTON_WIDTH = 96;
-
-	/** Color variants of the dialog header */
-	public enum HeaderStyle {
-		/** Blue to violet gradient */
-		NORMAL,
-		/** Orange gradient for warnings */
-		WARNING,
-		/** Red gradient for errors */
-		DANGER
-	}
 
 	/**
 	 * Value returned by {@link #open()}. If it is null, the value of
@@ -77,7 +67,7 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param owner owner window, may be null
 	 * @param title title of the dialog, also shown in the header
 	 */
-	public ModalDialog(final Window owner, final String title) {
+	public ModalDialogModern(final Window owner, final String title) {
 		this(owner, title, null);
 	}
 
@@ -88,7 +78,7 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param title    title of the dialog, also shown in the header
 	 * @param iconKind symbol shown in the header left of the title, null for none
 	 */
-	public ModalDialog(final Window owner, final String title, final IconKind iconKind) {
+	public ModalDialogModern(final Window owner, final String title, final IconKind iconKind) {
 		super(owner, title, ModalityType.DOCUMENT_MODAL);
 
 		// JDialog default is HIDE_ON_CLOSE: a dialog closed via the window decoration would keep its native resources
@@ -148,7 +138,7 @@ public abstract class ModalDialog<T> extends JDialog {
 	 * @param iconKind symbol, null for none
 	 */
 	protected void setHeaderIcon(final IconKind iconKind) {
-		headerLabel.setIcon(iconKind == null ? null : new ModernUi.ThemeIcon(iconKind, 20, Color.WHITE));
+		headerLabel.setIcon(iconKind == null ? null : new ThemeIcon(iconKind, 20, Color.WHITE));
 	}
 
 	/**

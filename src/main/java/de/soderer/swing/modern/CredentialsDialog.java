@@ -20,7 +20,6 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.utilities.Credentials;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
@@ -41,7 +40,7 @@ import de.soderer.utilities.StringUtilities;
  * The password confirmation field uses the language resource key {@code passwordConfirmation} for its label.
  * </p>
  */
-public class CredentialsDialog extends ModalDialog<Credentials> {
+public class CredentialsDialog extends ModalDialogModern<Credentials> {
 	/** Serialization version */
 	private static final long serialVersionUID = 7316024485910263788L;
 

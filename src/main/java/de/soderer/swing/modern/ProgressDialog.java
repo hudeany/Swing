@@ -17,7 +17,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.utilities.DateUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.Result;
@@ -43,7 +42,7 @@ import de.soderer.utilities.worker.WorkerSimple;
  *
  * @param <T> type of the worker
  */
-public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Result> implements WorkerParentSimple {
+public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialogModern<Result> implements WorkerParentSimple {
 	/** Serialization version */
 	private static final long serialVersionUID = -3360518471235920418L;
 

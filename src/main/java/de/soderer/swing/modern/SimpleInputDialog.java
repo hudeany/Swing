@@ -21,7 +21,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
 
@@ -35,7 +34,7 @@ import de.soderer.utilities.StringUtilities;
  * that would make the input not match the pattern.
  * </p>
  */
-public class SimpleInputDialog extends ModalDialog<String> {
+public class SimpleInputDialog extends ModalDialogModern<String> {
 	/** Serialization version */
 	private static final long serialVersionUID = -2091846612365079243L;
 

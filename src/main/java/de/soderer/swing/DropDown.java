@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -182,8 +183,8 @@ public class DropDown extends JPanel {
 	/** Scroll pane around the input field, scrolls long text horizontally and carries the text field border */
 	private final JScrollPane textScrollPane;
 
-	/** Button next to the input field that shows the full item list */
-	private final BasicArrowButton dropdownButton;
+	/** Button next to the input field that shows the full item list, see {@link #createDropdownButton()} */
+	private final JButton dropdownButton;
 
 	/** Currently shown popup, or null while the popup is hidden */
 	private Popup popup;
@@ -289,7 +290,7 @@ public class DropDown extends JPanel {
 	/** Color of invalid text (no match while custom values are not allowed) */
 	private Color invalidColor = new Color(220, 70, 70);
 
-	/** Color of the marker showing where a dragged popup entry would be inserted */
+	/** Color of the marker showing where a dragged popup entry would be inserted, see {@link #getInsertionMarkerColor()} */
 	private final Color insertionMarkerColor = new Color(0, 90, 220);
 
 	/**
@@ -407,14 +408,7 @@ public class DropDown extends JPanel {
 		textScrollPane = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		add(textScrollPane, BorderLayout.CENTER);
 
-		dropdownButton = new BasicArrowButton(SwingConstants.SOUTH) {
-			private static final long serialVersionUID = 8914036436318547129L;
-
-			@Override
-			public Dimension getPreferredSize() {
-				return new Dimension(DROPDOWN_BUTTON_WIDTH, super.getPreferredSize().height);
-			}
-		};
+		dropdownButton = createDropdownButton();
 
 		/*
 		 * Not focusable, so clicking it keeps the keyboard focus in the text pane,
@@ -507,6 +501,43 @@ public class DropDown extends JPanel {
 				hidePopup();
 			}
 		});
+	}
+
+	/**
+	 * Creates the button next to the input field that shows the full item list. Called once from the constructor,
+	 * so subclass fields are not yet initialized at that time. Subclasses may return a differently styled button,
+	 * focusability and the action are set up by the caller.
+	 *
+	 * @return the dropdown button, an arrow button of the look and feel by default
+	 */
+	@SuppressWarnings("static-method")
+	protected JButton createDropdownButton() {
+		return new BasicArrowButton(SwingConstants.SOUTH) {
+			private static final long serialVersionUID = 8914036436318547129L;
+
+			@Override
+			public Dimension getPreferredSize() {
+				return new Dimension(DROPDOWN_BUTTON_WIDTH, super.getPreferredSize().height);
+			}
+		};
+	}
+
+	/**
+	 * Returns the scroll pane around the input field, which carries the text field border.
+	 *
+	 * @return the scroll pane around the input field
+	 */
+	protected JScrollPane getTextScrollPane() {
+		return textScrollPane;
+	}
+
+	/**
+	 * Returns the button next to the input field.
+	 *
+	 * @return the dropdown button
+	 */
+	protected JButton getDropdownButton() {
+		return dropdownButton;
 	}
 
 	@Override
@@ -2068,6 +2099,19 @@ public class DropDown extends JPanel {
 
 		final Border popupBorder = UIManager.getBorder("PopupMenu.border");
 		popupScrollPane.setBorder(popupBorder != null ? popupBorder : BorderFactory.createLineBorder(Color.GRAY));
+
+		configurePopupContent(popupScrollPane, popupList);
+	}
+
+	/**
+	 * Hook to style the popup content, called once after the popup list and its scroll pane were created (on the
+	 * first use of the popup). Does nothing by default.
+	 *
+	 * @param popupContentScrollPane scroll pane around the popup list, the actual popup content
+	 * @param popupContentList       the popup list
+	 */
+	protected void configurePopupContent(final JScrollPane popupContentScrollPane, final JList<String> popupContentList) {
+		// May be filled in sub classes
 	}
 
 	/**
@@ -2336,8 +2380,17 @@ public class DropDown extends JPanel {
 			markerY = lastCell.y + lastCell.height;
 		}
 
-		g.setColor(insertionMarkerColor);
+		g.setColor(getInsertionMarkerColor());
 		g.fillRect(0, Math.max(0, Math.min(list.getHeight() - 2, markerY - 1)), list.getWidth(), 2);
+	}
+
+	/**
+	 * Returns the color of the marker showing where a dragged popup entry would be inserted.
+	 *
+	 * @return marker color
+	 */
+	protected Color getInsertionMarkerColor() {
+		return insertionMarkerColor;
 	}
 
 	/**
@@ -2391,9 +2444,10 @@ public class DropDown extends JPanel {
 
 	/**
 	 * Makes the embedded text pane look like a regular JTextField of the current
-	 * look and feel.
+	 * look and feel. Called from the constructor and after a look and feel change,
+	 * subclasses may apply their own styling instead.
 	 */
-	private void applyLookAndFeelDefaults() {
+	protected void applyLookAndFeelDefaults() {
 		Border border = UIManager.getBorder("TextField.border");
 		if (border == null) {
 			border = UIManager.getBorder("ScrollPane.border");
@@ -2417,7 +2471,12 @@ public class DropDown extends JPanel {
 		applyBackground();
 	}
 
-	private void applyBackground() {
+	/**
+	 * Sets the background of the input field depending on the enabled state.
+	 * Called after every change of the enabled state, subclasses may use their
+	 * own colors instead.
+	 */
+	protected void applyBackground() {
 		Color background;
 		if (isEnabled()) {
 			background = UIManager.getColor("TextField.background");

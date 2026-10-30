@@ -511,6 +511,13 @@ public final class ModernUi {
 						check.lineTo(s * 0.86, s * 0.26);
 						g2.draw(check);
 					}
+					case CHEVRON_DOWN -> {
+						final Path2D chevron = new Path2D.Double();
+						chevron.moveTo(s * 0.24, s * 0.38);
+						chevron.lineTo(s * 0.5, s * 0.64);
+						chevron.lineTo(s * 0.76, s * 0.38);
+						g2.draw(chevron);
+					}
 					default -> {
 						// nothing
 					}
@@ -522,20 +529,6 @@ public final class ModernUi {
 	}
 
 	// ---------------------------------------------------------------- buttons
-
-	/** Color variants of {@link ModernButton} */
-	public enum ButtonStyle {
-		/** Filled accent button for the main action */
-		PRIMARY,
-		/** White button with thin border */
-		SECONDARY,
-		/** White button with red text and border, e.g. for cancel */
-		DANGEROUS,
-		/** Transparent button on the gradient header */
-		HEADER,
-		/** Transparent button for toolbars inside cards, light accent background on hover */
-		TOOLBAR
-	}
 
 	/**
 	 * Flat rounded button with hover and pressed effect, painted completely by itself.

@@ -10,7 +10,6 @@ import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.swing.modern.ModernUi.ModernButton;
 import de.soderer.utilities.LangResources;
 
@@ -19,7 +18,7 @@ import de.soderer.utilities.LangResources;
  * buttons to copy the text to the clipboard and to close the dialog. The text can also be selected and copied
  * partially (CTRL+C or context menu). Same API as {@link de.soderer.swing.ShowDataDialog}.
  */
-public class ShowDataDialog extends ModalDialog<Boolean> {
+public class ShowDataDialog extends ModalDialogModern<Boolean> {
 	/** Serialization version */
 	private static final long serialVersionUID = -6620913548730185529L;
 

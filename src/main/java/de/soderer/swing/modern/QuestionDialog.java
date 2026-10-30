@@ -13,7 +13,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import de.soderer.swing.modern.ModernUi.ButtonStyle;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;
 
@@ -34,7 +33,7 @@ import de.soderer.utilities.StringUtilities;
  * several buttons, otherwise {@link DialogStyle#INFORMATION}.
  * </p>
  */
-public class QuestionDialog extends ModalDialog<Integer> {
+public class QuestionDialog extends ModalDialogModern<Integer> {
 	/** Serialization version */
 	private static final long serialVersionUID = 4471923567819023045L;
 

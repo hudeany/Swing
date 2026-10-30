@@ -1,6 +1,8 @@
 package de.soderer.swing.modern;
 
 /** Vector icons drawn with Java2D, so no image resources are needed */
+
+/** Vector icons drawn with Java2D, so no image resources are needed */
 public enum IconKind {
 	/** Mobile phone */
 	PHONE,
@@ -53,5 +55,7 @@ public enum IconKind {
 	/** Two sheets for copying */
 	COPY,
 	/** Check mark for confirmations */
-	CHECK
+	CHECK,
+	/** Small downwards chevron for dropdowns */
+	CHEVRON_DOWN
 }
