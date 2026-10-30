@@ -9,7 +9,7 @@
 	<property name="coverageMinimumBranchRatio" value="0.40" />
 
 	<!-- Dependency versions -->
-	<property name="soderer-utilities.version" value="26.3.5" />
+	<property name="soderer-utilities.version" value="26.3.7" />
 	
 	<!-- Maven POM dependencies: "groupId:artifactId:version[:optional]" -->
 	<property name="mavenDependency.soderer-utilities" value="de.soderer:soderer-utilities:${soderer-utilities.version}" />
