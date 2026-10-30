@@ -60,60 +60,144 @@ import javax.swing.text.JTextComponent;
  * gradient header, rounded "cards" with soft shadow, flat rounded buttons, pill shaped info chips,
  * a rounded progress bar, thin scroll bars and simple vector icons.
  *
+ * <p>
  * All components paint themselves completely, so they look the same with every look and feel
  * (Windows, GTK, Metal). Native components like combo boxes and spinners are left untouched.
+ * </p>
+ *
+ * <p>
+ * Typical usage: put a {@link GradientHeader} at the top of the window, place the content in {@link Card}s
+ * on a {@link #BACKGROUND} colored panel, use {@link ModernButton}s for actions and call
+ * {@link #blendIntoCard(Component)} for existing components placed inside a card.
+ * </p>
  */
 public final class ModernUi {
-	// Color palette
+	/** Window background behind the cards */
 	public static final Color BACKGROUND = new Color(0xF2F4F8);
+	/** Background of cards and of the components inside them */
 	public static final Color CARD = Color.WHITE;
+	/** Outline of cards, buttons and input fields */
 	public static final Color CARD_BORDER = new Color(0xDDE2EA);
+	/** Thin separator lines inside cards */
 	public static final Color INNER_BORDER = new Color(0xE6E9F0);
+	/** Default text color */
 	public static final Color TEXT = new Color(0x1F2633);
+	/** Grey text color for labels and secondary information */
 	public static final Color MUTED = new Color(0x6B7385);
+	/** Main accent color, e.g. for primary buttons and focused input fields */
 	public static final Color ACCENT = new Color(0x3B6FE0);
+	/** Accent color while the mouse is over a primary button */
 	public static final Color ACCENT_HOVER = new Color(0x4A7DEC);
+	/** Darker accent color for pressed primary buttons and accent colored text */
 	public static final Color ACCENT_PRESSED = new Color(0x2C55B8);
+	/** Light accent color for backgrounds, e.g. of title icons and accent chips */
 	public static final Color ACCENT_LIGHT = new Color(0xE8EFFD);
+	/** Left color of the header gradient */
 	public static final Color HEADER_START = new Color(0x2F5BD3);
+	/** Right color of the header gradient, also the end color of the progress bar fill */
 	public static final Color HEADER_END = new Color(0x7B4FD9);
+	/** Text color for success information */
 	public static final Color SUCCESS = new Color(0x2E9E5B);
+	/** Background color for success information */
 	public static final Color SUCCESS_LIGHT = new Color(0xE3F5EA);
+	/** Text color for warnings */
 	public static final Color WARNING = new Color(0xC97A12);
+	/** Background color for warnings */
 	public static final Color WARNING_LIGHT = new Color(0xFDF1DF);
+	/** Text color for errors and dangerous actions */
 	public static final Color DANGER = new Color(0xD64545);
+	/** Background color for errors and dangerous actions */
 	public static final Color DANGER_LIGHT = new Color(0xFDECEC);
+	/** Background color of neutral chips */
 	public static final Color NEUTRAL_LIGHT = new Color(0xEEF1F6);
+	/** Background of disabled primary buttons */
 	public static final Color DISABLED_BACKGROUND = new Color(0xE4E7ED);
+	/** Text color of disabled buttons */
 	public static final Color DISABLED_TEXT = new Color(0xA3A9B6);
+	/** Background of log and output areas */
 	public static final Color LOG_BACKGROUND = new Color(0xFAFBFD);
+	/** Background of read-only input fields */
 	public static final Color READ_ONLY_BACKGROUND = new Color(0xF6F7FA);
 
+	/** Corner diameter of cards */
 	private static final int CARD_ARC = 16;
+	/** Corner diameter of buttons */
 	private static final int BUTTON_ARC = 10;
 
+	/** Utility class, no instances */
 	private ModernUi() {
 		// Utility class
 	}
 
 	/** Vector icons drawn with Java2D, so no image resources are needed */
 	public enum IconKind {
-		PHONE, SERVER, REFRESH, PLAY, STOP, CLOSE, LOG, SEARCH, FOLDER, GEAR, HELP, SEND, EXPORT, IMPORT, TRASH, FAST_FORWARD, PLUS, FILE, LOCK
+		/** Mobile phone */
+		PHONE,
+		/** Two stacked server units */
+		SERVER,
+		/** Circular arrow for refresh or reload */
+		REFRESH,
+		/** Filled triangle for start */
+		PLAY,
+		/** Filled square for stop or cancel */
+		STOP,
+		/** Cross for close or remove */
+		CLOSE,
+		/** Text lines for logs or lists */
+		LOG,
+		/** Magnifying glass */
+		SEARCH,
+		/** Folder outline */
+		FOLDER,
+		/** Gear wheel for configuration */
+		GEAR,
+		/** Question mark in a circle */
+		HELP,
+		/** Paper plane for sending */
+		SEND,
+		/** Arrow up out of a tray */
+		EXPORT,
+		/** Arrow down into a tray */
+		IMPORT,
+		/** Trash can for delete */
+		TRASH,
+		/** Two triangles for multiple or repeated runs */
+		FAST_FORWARD,
+		/** Plus sign for add */
+		PLUS,
+		/** Document with folded corner */
+		FILE,
+		/** Padlock for security and authentication */
+		LOCK
 	}
 
 	// ---------------------------------------------------------------- fonts and rendering
 
+	/**
+	 * Returns the default label font of the current look and feel.
+	 *
+	 * @return the label font, or a plain 12 point sans serif font if the look and feel defines none
+	 */
 	public static Font baseFont() {
 		final Font font = UIManager.getFont("Label.font");
 		return font != null ? font : new Font(Font.SANS_SERIF, Font.PLAIN, 12);
 	}
 
+	/**
+	 * Returns the font for card titles: bold and slightly larger than {@link #baseFont()}.
+	 *
+	 * @return the title font
+	 */
 	public static Font titleFont() {
 		return baseFont().deriveFont(Font.BOLD, baseFont().getSize2D() + 1.5f);
 	}
 
 	/**
 	 * Creates a graphics copy with antialiasing and the desktop's text rendering hints.
+	 * The caller has to dispose the returned copy.
+	 *
+	 * @param graphics graphics to copy
+	 * @return prepared copy of the graphics
 	 */
 	static Graphics2D prepare(final Graphics graphics) {
 		final Graphics2D g2 = (Graphics2D) graphics.create();
@@ -128,10 +212,25 @@ public final class ModernUi {
 		return g2;
 	}
 
+	/**
+	 * Returns the given color with another alpha value.
+	 *
+	 * @param color base color
+	 * @param alpha alpha value from 0 (transparent) to 255 (opaque)
+	 * @return new color with the given alpha
+	 */
 	static Color withAlpha(final Color color, final int alpha) {
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 	}
 
+	/**
+	 * Mixes two colors.
+	 *
+	 * @param color      base color
+	 * @param other      color mixed in
+	 * @param otherShare share of the other color from 0.0 (only base color) to 1.0 (only other color)
+	 * @return mixed opaque color
+	 */
 	static Color mix(final Color color, final Color other, final double otherShare) {
 		final double share = 1 - otherShare;
 		return new Color(
@@ -140,6 +239,12 @@ public final class ModernUi {
 			(int) Math.round(color.getBlue() * share + other.getBlue() * otherShare));
 	}
 
+	/**
+	 * Escapes the HTML special characters of a text, e.g. for texts shown in HTML labels.
+	 *
+	 * @param text text to escape, may be null
+	 * @return escaped text, empty for null
+	 */
 	public static String escapeHtml(final String text) {
 		if (text == null) {
 			return "";
@@ -147,6 +252,12 @@ public final class ModernUi {
 		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
 	}
 
+	/**
+	 * Converts a color to CSS hex notation like "#3b6fe0", used in HTML labels.
+	 *
+	 * @param color color to convert
+	 * @return hex notation without alpha
+	 */
 	private static String toHex(final Color color) {
 		return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
 	}
@@ -157,16 +268,31 @@ public final class ModernUi {
 	 * Simple line icon in a fixed color. {@link ModernButton} repaints it in the button's text color.
 	 */
 	public static class ThemeIcon implements Icon {
+		/** Symbol to draw */
 		private final IconKind kind;
+		/** Width and height in pixels */
 		private final int size;
+		/** Color used by {@link #paintIcon(Component, Graphics, int, int)} */
 		private final Color color;
 
+		/**
+		 * Creates an icon.
+		 *
+		 * @param kind  symbol to draw
+		 * @param size  width and height in pixels
+		 * @param color line and fill color
+		 */
 		public ThemeIcon(final IconKind kind, final int size, final Color color) {
 			this.kind = kind;
 			this.size = size;
 			this.color = color;
 		}
 
+		/**
+		 * Returns the symbol of this icon.
+		 *
+		 * @return the symbol
+		 */
 		public IconKind getKind() {
 			return kind;
 		}
@@ -186,6 +312,14 @@ public final class ModernUi {
 			paint(graphics, x, y, color);
 		}
 
+		/**
+		 * Paints the icon in another color than the one it was created with, e.g. in a button's text color.
+		 *
+		 * @param graphics   graphics to paint on
+		 * @param x          left edge of the icon
+		 * @param y          top edge of the icon
+		 * @param paintColor line and fill color
+		 */
 		public void paint(final Graphics graphics, final int x, final int y, final Color paintColor) {
 			final Graphics2D g2 = prepare(graphics);
 			try {
@@ -361,6 +495,7 @@ public final class ModernUi {
 
 	// ---------------------------------------------------------------- buttons
 
+	/** Color variants of {@link ModernButton} */
 	public enum ButtonStyle {
 		/** Filled accent button for the main action */
 		PRIMARY,
@@ -376,10 +511,19 @@ public final class ModernUi {
 	 * Flat rounded button with hover and pressed effect, painted completely by itself.
 	 */
 	public static class ModernButton extends JButton {
+		/** Serialization version */
 		private static final long serialVersionUID = 1L;
 
+		/** Color variant */
 		private final ButtonStyle style;
 
+		/**
+		 * Creates a button. Without text the button is square and shows only the icon, so it should get a tooltip.
+		 *
+		 * @param text     button text, null or empty for an icon-only button
+		 * @param iconKind symbol shown left of the text in the text color, null for none
+		 * @param style    color variant
+		 */
 		public ModernButton(final String text, final IconKind iconKind, final ButtonStyle style) {
 			super(text);
 			this.style = style;
@@ -407,6 +551,13 @@ public final class ModernUi {
 			}
 		}
 
+		/**
+		 * Calculates the size from text, icon and padding (independent of the look and feel).
+		 * Text buttons are at least 32 pixels high (primary buttons 36), icon-only buttons are square.
+		 * An explicitly set preferred size takes precedence.
+		 *
+		 * @return the preferred size
+		 */
 		@Override
 		public Dimension getPreferredSize() {
 			if (isPreferredSizeSet()) {
@@ -429,6 +580,11 @@ public final class ModernUi {
 			return new Dimension(width, Math.max(height, style == ButtonStyle.PRIMARY ? 36 : 32));
 		}
 
+		/**
+		 * The button never shrinks below its preferred size, so text and icon stay readable.
+		 *
+		 * @return the preferred size
+		 */
 		@Override
 		public Dimension getMinimumSize() {
 			return getPreferredSize();
@@ -505,6 +661,14 @@ public final class ModernUi {
 			}
 		}
 
+		/**
+		 * Paints icon and text centered within the given size.
+		 *
+		 * @param g2         prepared graphics
+		 * @param foreground color of icon and text
+		 * @param width      available width
+		 * @param height     available height
+		 */
 		private void paintContent(final Graphics2D g2, final Color foreground, final int width, final int height) {
 			final FontMetrics metrics = g2.getFontMetrics(getFont());
 			final String text = getText();
@@ -541,8 +705,12 @@ public final class ModernUi {
 	 * Header band with a horizontal color gradient and some decorative translucent circles.
 	 */
 	public static class GradientHeader extends JPanel {
+		/** Serialization version */
 		private static final long serialVersionUID = 1L;
 
+		/**
+		 * Creates the header with a BorderLayout (e.g. logo WEST, title CENTER, buttons EAST) and inner padding.
+		 */
 		public GradientHeader() {
 			super(new BorderLayout(14, 0));
 			setOpaque(true);
@@ -570,10 +738,14 @@ public final class ModernUi {
 
 	/**
 	 * White round badge with the application icon (or a phone symbol if no icon is available) for the header.
+	 *
+	 * @param applicationIcon icon scaled into the badge, may be null
+	 * @return the logo component of 44 x 44 pixels
 	 */
 	public static JComponent createLogo(final Icon applicationIcon) {
 		return new JComponent() {
-			private static final long serialVersionUID = 1L;
+			/** Serialization version */
+		private static final long serialVersionUID = 1L;
 
 			@Override
 			public Dimension getPreferredSize() {
@@ -614,11 +786,21 @@ public final class ModernUi {
 	 * title row with {@link #addHeaderComponent(Component)}.
 	 */
 	public static class Card extends JPanel {
+		/** Serialization version */
 		private static final long serialVersionUID = 1L;
+		/** Width of the shadow around the card in pixels */
 		private static final int SHADOW = 5;
 
+		/** Container at the right side of the title row */
 		private final JPanel headerAccessories = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
+		/**
+		 * Creates a card.
+		 *
+		 * @param title    title shown in the first row, null for a card without title row
+		 * @param iconKind symbol shown left of the title, null for none
+		 * @param padding  inner distance between the card's edge and its content in pixels
+		 */
 		public Card(final String title, final IconKind iconKind, final int padding) {
 			super(new BorderLayout(0, 10));
 			setOpaque(false);
@@ -633,10 +815,21 @@ public final class ModernUi {
 			}
 		}
 
+		/**
+		 * Sets the content of the card, which takes all space below the title row.
+		 *
+		 * @param content component to show
+		 */
 		public void setContent(final Component content) {
 			add(content, BorderLayout.CENTER);
 		}
 
+		/**
+		 * Adds a component (e.g. a small button) at the right side of the title row.
+		 * Only shown for cards with a title.
+		 *
+		 * @param component component to add
+		 */
 		public void addHeaderComponent(final Component component) {
 			headerAccessories.add(component);
 		}
@@ -666,6 +859,10 @@ public final class ModernUi {
 
 	/**
 	 * Bold title with a small accent colored icon in a soft square.
+	 *
+	 * @param text     title text
+	 * @param iconKind symbol shown left of the text, null for none
+	 * @return the title label
 	 */
 	public static JLabel createTitleLabel(final String text, final IconKind iconKind) {
 		final JLabel label = new JLabel(text);
@@ -680,9 +877,16 @@ public final class ModernUi {
 
 	/** Icon in a light accent colored rounded square, used for card titles */
 	private static class BadgeIcon implements Icon {
+		/** Width and height of the badge in pixels */
 		private static final int SIZE = 26;
+		/** Symbol painted in the center of the badge */
 		private final ThemeIcon icon;
 
+		/**
+		 * Creates the badge for the given symbol.
+		 *
+		 * @param kind symbol to show
+		 */
 		BadgeIcon(final IconKind kind) {
 			icon = new ThemeIcon(kind, 16, ACCENT);
 		}
@@ -710,7 +914,12 @@ public final class ModernUi {
 		}
 	}
 
-	/** Bold title of a section inside a card, e.g. "Request body" */
+	/**
+	 * Bold title of a section inside a card, e.g. "Request body".
+	 *
+	 * @param text title text
+	 * @return the title label
+	 */
 	public static JLabel createSectionTitle(final String text) {
 		final JLabel label = new JLabel(text);
 		label.setFont(baseFont().deriveFont(Font.BOLD));
@@ -718,7 +927,12 @@ public final class ModernUi {
 		return label;
 	}
 
-	/** Small grey text, e.g. for labels in front of input fields */
+	/**
+	 * Grey text, e.g. for labels in front of input fields.
+	 *
+	 * @param text label text
+	 * @return the label
+	 */
 	public static JLabel createMutedLabel(final String text) {
 		final JLabel label = new JLabel(text);
 		label.setForeground(MUTED);
@@ -729,16 +943,34 @@ public final class ModernUi {
 
 	/** Color variants of {@link Chip} */
 	public enum ChipStyle {
-		NEUTRAL, ACCENTUATED, SUCCESSFUL, ALERT, DANGEROUS
+		/** Grey background, normal text */
+		NEUTRAL,
+		/** Light accent background, accent colored text */
+		ACCENTUATED,
+		/** Light green background, green text */
+		SUCCESSFUL,
+		/** Light orange background, orange text */
+		ALERT,
+		/** Light red background, red text */
+		DANGEROUS
 	}
 
 	/**
 	 * Pill shaped label for compact information like "Model: Pixel 8".
 	 */
 	public static class Chip extends JLabel {
+		/** Serialization version */
 		private static final long serialVersionUID = 1L;
+		/** Pill background color */
 		private final Color background;
 
+		/**
+		 * Creates a chip showing an optional grey caption followed by the bold value.
+		 *
+		 * @param caption grey text in front of the value, null or empty for none
+		 * @param value   bold value text
+		 * @param style   color variant
+		 */
 		public Chip(final String caption, final String value, final ChipStyle style) {
 			final Color foreground = switch (style) {
 				case ACCENTUATED -> ACCENT_PRESSED;
@@ -786,11 +1018,15 @@ public final class ModernUi {
 	// ---------------------------------------------------------------- progress bar
 
 	/**
-	 * Progress bar with rounded track, gradient fill and centered text.
+	 * Creates a progress bar with rounded track, gradient fill and centered text.
+	 * The part of the text lying on the fill is drawn in white.
+	 *
+	 * @return the progress bar; its height should be set via the preferred size (e.g. 20 pixels)
 	 */
 	public static JProgressBar createProgressBar() {
 		final JProgressBar progressBar = new JProgressBar() {
-			private static final long serialVersionUID = 1L;
+			/** Serialization version */
+		private static final long serialVersionUID = 1L;
 
 			@Override
 			public void updateUI() {
@@ -804,7 +1040,13 @@ public final class ModernUi {
 		return progressBar;
 	}
 
+	/** Paints the progress bar of {@link #createProgressBar()} completely by itself */
 	private static class ModernProgressBarUI extends BasicProgressBarUI {
+		/** Creates the UI */
+		ModernProgressBarUI() {
+			// nothing to initialize
+		}
+
 		@Override
 		public void paint(final Graphics graphics, final JComponent component) {
 			final Graphics2D g2 = prepare(graphics);
@@ -861,7 +1103,10 @@ public final class ModernUi {
 	// ---------------------------------------------------------------- scroll and split panes
 
 	/**
-	 * Thin inner border, white viewport and slim rounded scroll bars.
+	 * Gives a scroll pane a rounded border, the given viewport background and slim rounded scroll bars.
+	 *
+	 * @param scrollPane         scroll pane to style
+	 * @param viewportBackground background of the viewport and the scroll bar tracks
 	 */
 	public static void styleScrollPane(final JScrollPane scrollPane, final Color viewportBackground) {
 		scrollPane.setBorder(new RoundedFieldBorder(4, 4));
@@ -872,13 +1117,22 @@ public final class ModernUi {
 	}
 
 	/**
-	 * Slim rounded scroll bars only, the border of the scroll pane is kept.
+	 * Gives a scroll pane slim rounded scroll bars only, its border is kept.
+	 *
+	 * @param scrollPane scroll pane to style
+	 * @param trackColor background of the scroll bar tracks
 	 */
 	public static void styleScrollBars(final JScrollPane scrollPane, final Color trackColor) {
 		styleScrollBar(scrollPane.getVerticalScrollBar(), trackColor);
 		styleScrollBar(scrollPane.getHorizontalScrollBar(), trackColor);
 	}
 
+	/**
+	 * Installs the slim scroll bar UI, a faster mouse wheel step and a width of 11 pixels.
+	 *
+	 * @param scrollBar  scroll bar to style
+	 * @param trackColor background of the track
+	 */
 	private static void styleScrollBar(final JScrollBar scrollBar, final Color trackColor) {
 		scrollBar.setUI(new SlimScrollBarUI(trackColor));
 		scrollBar.setOpaque(true);
@@ -891,9 +1145,16 @@ public final class ModernUi {
 		}
 	}
 
+	/** Scroll bar without arrow buttons and with a slim rounded thumb */
 	private static class SlimScrollBarUI extends BasicScrollBarUI {
+		/** Background of the track */
 		private final Color barTrackColor;
 
+		/**
+		 * Creates the UI with the given track color.
+		 *
+		 * @param barTrackColor background of the track
+		 */
 		SlimScrollBarUI(final Color barTrackColor) {
 			this.barTrackColor = barTrackColor;
 		}
@@ -908,6 +1169,11 @@ public final class ModernUi {
 			return createInvisibleButton();
 		}
 
+		/**
+		 * Creates a zero sized replacement for the arrow buttons.
+		 *
+		 * @return the invisible button
+		 */
 		private static JButton createInvisibleButton() {
 			final JButton button = new JButton();
 			button.setPreferredSize(new Dimension(0, 0));
@@ -944,7 +1210,10 @@ public final class ModernUi {
 	}
 
 	/**
-	 * Transparent split pane with an invisible divider, so the cards seem to float on the background.
+	 * Makes a split pane transparent with an invisible divider, so the cards seem to float on the background.
+	 * Replaces the split pane's UI, so this has to be called again after a look and feel change.
+	 *
+	 * @param splitPane split pane to style
 	 */
 	public static void styleSplitPane(final JSplitPane splitPane) {
 		// Plain divider without grips or 3D effects of the look and feel
@@ -952,7 +1221,8 @@ public final class ModernUi {
 			@Override
 			public BasicSplitPaneDivider createDefaultDivider() {
 				return new BasicSplitPaneDivider(this) {
-					private static final long serialVersionUID = 1L;
+					/** Serialization version */
+		private static final long serialVersionUID = 1L;
 
 					@Override
 					public void paint(final Graphics graphics) {
@@ -974,7 +1244,10 @@ public final class ModernUi {
 	/**
 	 * Gives all panels inside a card the card's white background, so existing (not yet restyled) components
 	 * do not show the look and feel's grey panel color. Only default backgrounds of the look and feel are
-	 * replaced; colors set explicitly by the application are kept.
+	 * replaced; colors set explicitly by the application are kept. Check boxes and radio buttons are made
+	 * transparent. Components added later are not affected, so call this after the content was created.
+	 *
+	 * @param component component to adjust, including all its children
 	 */
 	public static void blendIntoCard(final Component component) {
 		if ((component instanceof JPanel || component instanceof JViewport) && component.isOpaque() && component.getBackground() instanceof UIResource) {
@@ -997,18 +1270,33 @@ public final class ModernUi {
 	 * with the surrounding background, so the component's rectangular background does not show there.
 	 */
 	public static class RoundedFieldBorder extends AbstractBorder {
+		/** Serialization version */
 		private static final long serialVersionUID = 1L;
+		/** Corner diameter */
 		private static final int ARC = 10;
 
+		/** Inner padding at top and bottom */
 		private final int vertical;
+		/** Inner padding at left and right */
 		private final int horizontal;
+		/** Component whose focus decides the outline color, null for the bordered component itself */
 		private final Component focusSource;
 
+		/**
+		 * Creates a border whose outline shows the focus of the bordered component itself.
+		 *
+		 * @param vertical   inner padding at top and bottom in pixels
+		 * @param horizontal inner padding at left and right in pixels
+		 */
 		public RoundedFieldBorder(final int vertical, final int horizontal) {
 			this(vertical, horizontal, null);
 		}
 
 		/**
+		 * Creates a border whose outline shows the focus of another component.
+		 *
+		 * @param vertical    inner padding at top and bottom in pixels
+		 * @param horizontal  inner padding at left and right in pixels
 		 * @param focusSource component whose focus decides the outline color, e.g. the text area inside a
 		 *                    scroll pane; null for the bordered component itself
 		 */
@@ -1050,6 +1338,12 @@ public final class ModernUi {
 			}
 		}
 
+		/**
+		 * Returns the background of the first opaque parent (a card counts as opaque white), used for the corners.
+		 *
+		 * @param component bordered component
+		 * @return the surrounding background color
+		 */
 		private static Color getSurroundingBackground(final Component component) {
 			Component parent = component.getParent();
 			while (parent != null) {
@@ -1065,7 +1359,11 @@ public final class ModernUi {
 	}
 
 	/**
-	 * Rounded text field with padding; read-only fields get a light grey background.
+	 * Gives a text field a rounded border with padding and an accent colored outline while focused.
+	 * Read-only fields get a light grey background.
+	 *
+	 * @param textField text field to style
+	 * @param readOnly  true for the read-only background
 	 */
 	public static void styleTextField(final JTextField textField, final boolean readOnly) {
 		textField.setBorder(new RoundedFieldBorder(5, 9));
@@ -1076,7 +1374,12 @@ public final class ModernUi {
 	}
 
 	/**
-	 * Monospaced text area with padding in a rounded scroll pane, e.g. for request and response bodies.
+	 * Gives a text area a monospaced font and padding and its scroll pane a rounded border, whose outline
+	 * shows the focus of the text area. Suitable e.g. for request and response bodies.
+	 *
+	 * @param textArea   text area to style
+	 * @param scrollPane scroll pane containing the text area
+	 * @param readOnly   true for the read-only background
 	 */
 	public static void styleTextArea(final JTextArea textArea, final JScrollPane scrollPane, final boolean readOnly) {
 		final Color background = readOnly ? READ_ONLY_BACKGROUND : Color.WHITE;
@@ -1090,6 +1393,12 @@ public final class ModernUi {
 		addFocusRepaint(textArea, scrollPane);
 	}
 
+	/**
+	 * Repaints a component whenever another component gains or loses the focus, e.g. to update a focus outline.
+	 *
+	 * @param focusComponent   component whose focus changes are observed
+	 * @param repaintComponent component to repaint
+	 */
 	private static void addFocusRepaint(final JComponent focusComponent, final JComponent repaintComponent) {
 		focusComponent.addFocusListener(new FocusAdapter() {
 			@Override
