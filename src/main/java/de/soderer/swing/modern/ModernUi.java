@@ -537,6 +537,9 @@ public final class ModernUi {
 		/** Serialization version */
 		private static final long serialVersionUID = 1L;
 
+		/** Minimum height of all text buttons, equal for every style, so buttons in a row stay aligned */
+		private static final int TEXT_BUTTON_MIN_HEIGHT = 36;
+
 		/** Color variant */
 		private final ButtonStyle style;
 
@@ -576,7 +579,7 @@ public final class ModernUi {
 
 		/**
 		 * Calculates the size from text, icon and padding (independent of the look and feel).
-		 * Text buttons are at least 32 pixels high (primary buttons 36), icon-only buttons are square.
+		 * Text buttons of all styles are at least {@link #TEXT_BUTTON_MIN_HEIGHT} pixels high, icon-only buttons are square.
 		 * An explicitly set preferred size takes precedence.
 		 *
 		 * @return the preferred size
@@ -600,7 +603,8 @@ public final class ModernUi {
 				final int side = Math.max(width, height);
 				return new Dimension(side, side);
 			}
-			return new Dimension(width, Math.max(height, style == ButtonStyle.PRIMARY ? 36 : 32));
+			// Before, primary buttons had a minimum of 36 and all others 32 pixels, so mixed buttons in a FlowLayout row were vertically offset
+			return new Dimension(width, Math.max(height, TEXT_BUTTON_MIN_HEIGHT));
 		}
 
 		/**
