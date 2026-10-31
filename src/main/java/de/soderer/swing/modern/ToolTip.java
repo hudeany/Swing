@@ -33,7 +33,7 @@ import javax.swing.plaf.basic.BasicToolTipUI;
  * (tooltip extends beyond the window) need per-pixel translucency support of
  * the platform; otherwise a plain rectangular tooltip is painted as fallback.</p>
  */
-public class ModernToolTipUI extends BasicToolTipUI {
+public class ToolTip extends BasicToolTipUI {
 	/** Dark tooltip background, matching the ModernUi text color */
 	private static final Color BACKGROUND = ModernUi.TEXT;
 	/** Tooltip text color */
@@ -41,8 +41,11 @@ public class ModernToolTipUI extends BasicToolTipUI {
 	/** Subtle outline, slightly lighter than the background */
 	private static final Color BORDER = ModernUi.mix(ModernUi.TEXT, Color.WHITE, 0.15);
 
+	/** Corner diameter of the tooltip bubble */
 	private static final int ARC = 10;
+	/** Width of the drop shadow around the bubble in pixels */
 	private static final int SHADOW = 4;
+	/** Space between the bubble's outline and the text at the top and bottom */
 	private static final int PAD_VERTICAL = 6;
 	/** BasicToolTipUI already adds 3px on the left and right of the text */
 	private static final int PAD_HORIZONTAL = 7;
@@ -50,7 +53,15 @@ public class ModernToolTipUI extends BasicToolTipUI {
 	/** Client property: false if the tooltip lives in an opaque heavyweight window */
 	private static final String ROUNDED_POSSIBLE = "ModernToolTipUI.roundedPossible";
 
+	/** Listener that adjusts the popup container as soon as the tooltip is added to it */
 	private final HierarchyListener hierarchyListener = this::hierarchyChanged;
+
+	/**
+	 * Creates a new tooltip UI. Usually called by {@link #createUI(JComponent)}.
+	 */
+	public ToolTip() {
+		super();
+	}
 
 	/**
 	 * Called by the UIManager via reflection.
@@ -59,7 +70,7 @@ public class ModernToolTipUI extends BasicToolTipUI {
 	 * @return new UI instance
 	 */
 	public static ComponentUI createUI(final JComponent component) {
-		return new ModernToolTipUI();
+		return new ToolTip();
 	}
 
 	/**
@@ -68,9 +79,9 @@ public class ModernToolTipUI extends BasicToolTipUI {
 	 * the developer defaults of the UIManager.
 	 */
 	public static void install() {
-		UIManager.put("ToolTipUI", ModernToolTipUI.class.getName());
+		UIManager.put("ToolTipUI", ToolTip.class.getName());
 		// Store the class itself, so UIDefaults does not depend on its classloader lookup
-		UIManager.put(ModernToolTipUI.class.getName(), ModernToolTipUI.class);
+		UIManager.put(ToolTip.class.getName(), ToolTip.class);
 
 		final ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 		toolTipManager.setInitialDelay(450);
@@ -141,7 +152,10 @@ public class ModernToolTipUI extends BasicToolTipUI {
 
 	/**
 	 * Makes the popup container transparent as soon as the tooltip is added to it,
-	 * so the rounded corners and the shadow are visible.
+	 * so the rounded corners and the shadow are visible. Marks the tooltip for the rectangular
+	 * fallback painting if the container cannot be made transparent.
+	 *
+	 * @param event hierarchy change of the tooltip
 	 */
 	private void hierarchyChanged(final HierarchyEvent event) {
 		if ((event.getChangeFlags() & (HierarchyEvent.PARENT_CHANGED | HierarchyEvent.SHOWING_CHANGED)) == 0) {
@@ -180,6 +194,13 @@ public class ModernToolTipUI extends BasicToolTipUI {
 		}
 	}
 
+	/**
+	 * Checks whether the screen device of the component supports per-pixel translucent windows.
+	 * This is not the case e.g. on Linux desktops without a compositing window manager.
+	 *
+	 * @param component component whose screen device is checked
+	 * @return true if transparent window backgrounds are supported
+	 */
 	private static boolean isTranslucencySupported(final Component component) {
 		final GraphicsConfiguration graphicsConfiguration = component.getGraphicsConfiguration();
 		return graphicsConfiguration != null

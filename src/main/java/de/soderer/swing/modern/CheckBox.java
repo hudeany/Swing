@@ -35,8 +35,16 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
  * <p>Installed for all check boxes by {@link #install()}, which is called by {@link ModernUi}
  * automatically. {@link RadioButtonUI} does the same for radio buttons.</p>
  */
-public class ModernCheckBoxUI extends BasicCheckBoxUI {
+public class CheckBox extends BasicCheckBoxUI {
+	/** Box icon of this check box, created when the defaults are installed */
 	private ToggleIcon toggleIcon;
+
+	/**
+	 * Creates a new check box UI. Usually called by {@link #createUI(JComponent)}.
+	 */
+	public CheckBox() {
+		super();
+	}
 
 	/**
 	 * Called by the UIManager via reflection.
@@ -45,7 +53,7 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 	 * @return new UI instance
 	 */
 	public static ComponentUI createUI(final JComponent component) {
-		return new ModernCheckBoxUI();
+		return new CheckBox();
 	}
 
 	/**
@@ -53,9 +61,9 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 	 * Survives look-and-feel changes, because it is stored in the developer defaults of the UIManager.
 	 */
 	public static void install() {
-		UIManager.put("CheckBoxUI", ModernCheckBoxUI.class.getName());
+		UIManager.put("CheckBoxUI", CheckBox.class.getName());
 		// Store the classes themselves, so UIDefaults does not depend on its classloader lookup
-		UIManager.put(ModernCheckBoxUI.class.getName(), ModernCheckBoxUI.class);
+		UIManager.put(CheckBox.class.getName(), CheckBox.class);
 		UIManager.put("RadioButtonUI", RadioButtonUI.class.getName());
 		UIManager.put(RadioButtonUI.class.getName(), RadioButtonUI.class);
 	}
@@ -83,10 +91,18 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 	}
 
 	/**
-	 * Radio button UI in ModernUi style: round counterpart of {@link ModernCheckBoxUI}.
+	 * Radio button UI in ModernUi style: round counterpart of {@link CheckBox}.
 	 */
 	public static class RadioButtonUI extends BasicRadioButtonUI {
+		/** Circle icon of this radio button, created when the defaults are installed */
 		private ToggleIcon toggleIcon;
+
+		/**
+		 * Creates a new radio button UI. Usually called by {@link #createUI(JComponent)}.
+		 */
+		public RadioButtonUI() {
+			super();
+		}
 
 		/**
 		 * Called by the UIManager via reflection.
@@ -124,6 +140,8 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 	/**
 	 * Replaces missing or look-and-feel provided values. Some look and feels (GTK/Synth) do not define
 	 * the Basic defaults, so font and colors would otherwise be missing. Values set by the application are kept.
+	 *
+	 * @param button check box or radio button to configure
 	 */
 	static void installModernDefaults(final AbstractButton button) {
 		if (button.getFont() == null || button.getFont() instanceof UIResource) {
@@ -138,7 +156,12 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 
 	/**
 	 * Paints the (non HTML) text: normal foreground, or a flat grey when disabled,
-	 * instead of the embossed disabled text of BasicButtonUI.
+	 * instead of the embossed disabled text of BasicButtonUI. The mnemonic is underlined while enabled.
+	 *
+	 * @param graphics graphics to paint on
+	 * @param button   check box or radio button whose text is painted
+	 * @param textRect area for the text, calculated by the layout of the button UI
+	 * @param text     text to paint, possibly clipped with "..."
 	 */
 	static void paintModernText(final Graphics graphics, final AbstractButton button, final Rectangle textRect, final String text) {
 		final Graphics2D g2 = ModernUi.prepare(graphics);
@@ -160,7 +183,9 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 		/** Space around the box for the focus ring */
 		private static final int FOCUS_MARGIN = 2;
 
+		/** True for a circle (radio button), false for a rounded box (check box) */
 		private final boolean round;
+		/** Width and height of the box or circle in pixels, without the focus margin */
 		private final int boxSize;
 
 		/**
@@ -241,6 +266,14 @@ public class ModernCheckBoxUI extends BasicCheckBoxUI {
 			}
 		}
 
+		/**
+		 * Creates the outline shape of the icon: a circle for radio buttons, a rounded square for check boxes.
+		 *
+		 * @param x    left edge
+		 * @param y    top edge
+		 * @param size width and height
+		 * @return the shape
+		 */
 		private Shape shape(final float x, final float y, final float size) {
 			if (round) {
 				return new Ellipse2D.Float(x, y, size, size);

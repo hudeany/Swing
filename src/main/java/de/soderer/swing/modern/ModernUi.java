@@ -156,16 +156,16 @@ public final class ModernUi {
 	// ---------------------------------------------------------------- global installation
 
 	/**
-	 * Registers the ModernUi delegates for all tooltips ({@link ModernToolTipUI}), check boxes and radio buttons
-	 * ({@link ModernCheckBoxUI}) of the application. This is done automatically as soon as ModernUi is used for the
+	 * Registers the ModernUi delegates for all tooltips ({@link ToolTip}), check boxes and radio buttons
+	 * ({@link CheckBox}) of the application. This is done automatically as soon as ModernUi is used for the
 	 * first time, so calling it explicitly is only needed if such components are created before any other ModernUi
 	 * usage. Calling it more than once has no further effect. The registration survives look and feel changes.
 	 */
 	public static synchronized void install() {
 		if (!installed) {
 			installed = true;
-			ModernToolTipUI.install();
-			ModernCheckBoxUI.install();
+			ToolTip.install();
+			CheckBox.install();
 		}
 	}
 
