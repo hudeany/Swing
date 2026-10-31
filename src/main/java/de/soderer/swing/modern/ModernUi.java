@@ -65,7 +65,8 @@ import javax.swing.text.JTextComponent;
  *
  * <p>
  * All components paint themselves completely, so they look the same with every look and feel
- * (Windows, GTK, Metal). Native components like combo boxes and spinners are left untouched.
+ * (Windows, GTK, Metal). Tooltips, check boxes and radio buttons are restyled globally (see {@link #install()}).
+ * Other native components like combo boxes and spinners are left untouched.
  * </p>
  *
  * <p>
@@ -139,9 +140,33 @@ public final class ModernUi {
 	/** Corner diameter of buttons */
 	private static final int BUTTON_ARC = 10;
 
+	/** Whether the global UI delegates were already registered (no initializer, it would run after the static block) */
+	private static boolean installed;
+
+	static {
+		// Must stay below the color constants, because the installed UIs use them during their own initialization
+		install();
+	}
+
 	/** Utility class, no instances */
 	private ModernUi() {
 		// Utility class
+	}
+
+	// ---------------------------------------------------------------- global installation
+
+	/**
+	 * Registers the ModernUi delegates for all tooltips ({@link ModernToolTipUI}), check boxes and radio buttons
+	 * ({@link ModernCheckBoxUI}) of the application. This is done automatically as soon as ModernUi is used for the
+	 * first time, so calling it explicitly is only needed if such components are created before any other ModernUi
+	 * usage. Calling it more than once has no further effect. The registration survives look and feel changes.
+	 */
+	public static synchronized void install() {
+		if (!installed) {
+			installed = true;
+			ModernToolTipUI.install();
+			ModernCheckBoxUI.install();
+		}
 	}
 
 	// ---------------------------------------------------------------- fonts and rendering
