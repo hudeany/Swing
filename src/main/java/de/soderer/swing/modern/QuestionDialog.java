@@ -2,7 +2,10 @@ package de.soderer.swing.modern;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -172,6 +175,9 @@ public class QuestionDialog extends ModalDialog<Integer> {
 			buttonToSelect = addButton(LangResources.get("close"), null, ButtonStyle.PRIMARY, event -> dispose());
 		}
 
+		// A single button takes the whole width of the button bar, several buttons stay right aligned
+		setButtonFillsWidth(buttonTexts == null || buttonTexts.length <= 1);
+
 		pack();
 
 		if (textScrollpane.getHorizontalScrollBar().isVisible()) {
@@ -184,6 +190,26 @@ public class QuestionDialog extends ModalDialog<Integer> {
 
 		defaultButton = buttonToSelect;
 		getRootPane().setDefaultButton(buttonToSelect);
+	}
+
+	/**
+	 * Switches the right button group between filling the whole width of the button bar (for a single button)
+	 * and the default right aligned flow layout. Reversible, because {@link #createComponents()} runs again on
+	 * every setter call.
+	 *
+	 * @param fillWidth true to stretch the button(s) over the whole width
+	 */
+	private void setButtonFillsWidth(final boolean fillWidth) {
+		final Container rightButtonBar = getButtonBar();
+		final Container buttonBarPanel = rightButtonBar.getParent();
+		if (buttonBarPanel != null && buttonBarPanel.getLayout() instanceof BorderLayout) {
+			buttonBarPanel.remove(rightButtonBar);
+			buttonBarPanel.add(rightButtonBar, fillWidth ? BorderLayout.CENTER : BorderLayout.EAST);
+		}
+		// GridLayout ignores the preferred (minimum) width of the button and stretches it
+		rightButtonBar.setLayout(fillWidth ? new GridLayout(1, 0, 8, 0) : new FlowLayout(FlowLayout.RIGHT, 8, 0));
+		// The empty left group would otherwise still cause the horizontal gap of the BorderLayout on the left side
+		getLeftButtonBar().setVisible(!fillWidth);
 	}
 
 	/**
