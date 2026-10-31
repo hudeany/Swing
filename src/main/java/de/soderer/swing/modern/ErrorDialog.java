@@ -23,7 +23,6 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
-import de.soderer.swing.modern.ModernUi.Button;
 import de.soderer.utilities.ExceptionUtilities;
 import de.soderer.utilities.LangResources;
 import de.soderer.utilities.StringUtilities;

@@ -90,11 +90,11 @@ final class TextSupport {
 	 * @param text   text to copy
 	 * @param button button to show the feedback on, may be null
 	 */
-	static void copyToClipboard(final String text, final ModernUi.Button button) {
+	static void copyToClipboard(final String text, final Button button) {
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text == null ? "" : text), null);
 		if (button != null) {
 			final Icon originalIcon = button.getIcon();
-			button.setIcon(new ModernUi.ThemeIcon(IconKind.CHECK, 15, ModernUi.SUCCESS));
+			button.setIcon(new ThemeIcon(IconKind.CHECK, 15, ModernUi.SUCCESS));
 			final Timer restoreTimer = new Timer(COPY_FEEDBACK_MILLIS, event -> button.setIcon(originalIcon));
 			restoreTimer.setRepeats(false);
 			restoreTimer.start();

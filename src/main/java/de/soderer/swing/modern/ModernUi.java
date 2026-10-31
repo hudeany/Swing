@@ -1,38 +1,22 @@
 package de.soderer.swing.modern;
 
 import java.awt.Adjustable;
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.geom.Arc2D;
-import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
-import javax.swing.ButtonModel;
 import javax.swing.Icon;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -46,17 +30,11 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
-import javax.swing.SwingConstants;
 import javax.swing.UIManager;
-import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
-import javax.swing.plaf.basic.BasicProgressBarUI;
-import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
-import javax.swing.text.JTextComponent;
 
 /**
  * Small, dependency-free toolkit for a modern look of application main windows:
@@ -136,9 +114,9 @@ public final class ModernUi {
 	public static final Color TABLE_HEADER_BACKGROUND = new Color(0xF3F5F9);
 
 	/** Corner diameter of cards */
-	private static final int CARD_ARC = 16;
+	static final int CARD_ARC = 16;
 	/** Corner diameter of buttons */
-	private static final int BUTTON_ARC = 10;
+	static final int BUTTON_ARC = 10;
 
 	/** Whether the global UI delegates were already registered (no initializer, it would run after the static block) */
 	private static boolean installed;
@@ -256,561 +234,15 @@ public final class ModernUi {
 	 * @param color color to convert
 	 * @return hex notation without alpha
 	 */
-	private static String toHex(final Color color) {
+	static String toHex(final Color color) {
 		return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	// ---------------------------------------------------------------- icons
 
-	/**
-	 * Simple line icon in a fixed color. {@link Button} repaints it in the button's text color.
-	 */
-	public static class ThemeIcon implements Icon {
-		/** Symbol to draw */
-		private final IconKind kind;
-		/** Width and height in pixels */
-		private final int size;
-		/** Color used by {@link #paintIcon(Component, Graphics, int, int)} */
-		private final Color color;
-
-		/**
-		 * Creates an icon.
-		 *
-		 * @param kind  symbol to draw
-		 * @param size  width and height in pixels
-		 * @param color line and fill color
-		 */
-		public ThemeIcon(final IconKind kind, final int size, final Color color) {
-			this.kind = kind;
-			this.size = size;
-			this.color = color;
-		}
-
-		/**
-		 * Returns the symbol of this icon.
-		 *
-		 * @return the symbol
-		 */
-		public IconKind getKind() {
-			return kind;
-		}
-
-		@Override
-		public int getIconWidth() {
-			return size;
-		}
-
-		@Override
-		public int getIconHeight() {
-			return size;
-		}
-
-		@Override
-		public void paintIcon(final Component component, final Graphics graphics, final int x, final int y) {
-			paint(graphics, x, y, color);
-		}
-
-		/**
-		 * Paints the icon in another color than the one it was created with, e.g. in a button's text color.
-		 *
-		 * @param graphics   graphics to paint on
-		 * @param x          left edge of the icon
-		 * @param y          top edge of the icon
-		 * @param paintColor line and fill color
-		 */
-		public void paint(final Graphics graphics, final int x, final int y, final Color paintColor) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				g2.translate(x, y);
-				g2.setColor(paintColor);
-				final double s = size;
-				g2.setStroke(new BasicStroke((float) Math.max(1.4, s / 10.0), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-				switch (kind) {
-					case PHONE -> {
-						g2.draw(new RoundRectangle2D.Double(s * 0.27, s * 0.06, s * 0.46, s * 0.88, s * 0.18, s * 0.18));
-						g2.draw(new Line2D.Double(s * 0.44, s * 0.78, s * 0.56, s * 0.78));
-					}
-					case SERVER -> {
-						g2.draw(new RoundRectangle2D.Double(s * 0.1, s * 0.14, s * 0.8, s * 0.3, s * 0.12, s * 0.12));
-						g2.draw(new RoundRectangle2D.Double(s * 0.1, s * 0.56, s * 0.8, s * 0.3, s * 0.12, s * 0.12));
-						final double dot = s * 0.12;
-						g2.fill(new Ellipse2D.Double(s * 0.68, s * 0.29 - dot / 2, dot, dot));
-						g2.fill(new Ellipse2D.Double(s * 0.68, s * 0.71 - dot / 2, dot, dot));
-					}
-					case REFRESH -> {
-						final double radius = s * 0.33;
-						final double center = s * 0.5;
-						g2.draw(new Arc2D.Double(center - radius, center - radius, radius * 2, radius * 2, 80, 280, Arc2D.OPEN));
-						// Arrow head at the end of the arc (angle 0, moving upwards)
-						final Path2D arrow = new Path2D.Double();
-						arrow.moveTo(center + radius - s * 0.16, center - s * 0.02);
-						arrow.lineTo(center + radius + s * 0.15, center - s * 0.02);
-						arrow.lineTo(center + radius, center - s * 0.22);
-						arrow.closePath();
-						g2.fill(arrow);
-					}
-					case PLAY -> {
-						final Path2D triangle = new Path2D.Double();
-						triangle.moveTo(s * 0.28, s * 0.16);
-						triangle.lineTo(s * 0.28, s * 0.84);
-						triangle.lineTo(s * 0.84, s * 0.5);
-						triangle.closePath();
-						g2.fill(triangle);
-						g2.draw(triangle);
-					}
-					case STOP -> g2.fill(new RoundRectangle2D.Double(s * 0.22, s * 0.22, s * 0.56, s * 0.56, s * 0.14, s * 0.14));
-					case CLOSE -> {
-						g2.draw(new Line2D.Double(s * 0.26, s * 0.26, s * 0.74, s * 0.74));
-						g2.draw(new Line2D.Double(s * 0.74, s * 0.26, s * 0.26, s * 0.74));
-					}
-					case LOG -> {
-						g2.draw(new Line2D.Double(s * 0.18, s * 0.28, s * 0.82, s * 0.28));
-						g2.draw(new Line2D.Double(s * 0.18, s * 0.5, s * 0.82, s * 0.5));
-						g2.draw(new Line2D.Double(s * 0.18, s * 0.72, s * 0.6, s * 0.72));
-					}
-					case SEARCH -> {
-						g2.draw(new Ellipse2D.Double(s * 0.14, s * 0.14, s * 0.5, s * 0.5));
-						g2.draw(new Line2D.Double(s * 0.58, s * 0.58, s * 0.86, s * 0.86));
-					}
-					case FOLDER -> {
-						final Path2D folder = new Path2D.Double();
-						folder.moveTo(s * 0.08, s * 0.24);
-						folder.lineTo(s * 0.38, s * 0.24);
-						folder.lineTo(s * 0.48, s * 0.34);
-						folder.lineTo(s * 0.92, s * 0.34);
-						folder.lineTo(s * 0.92, s * 0.82);
-						folder.lineTo(s * 0.08, s * 0.82);
-						folder.closePath();
-						g2.draw(folder);
-					}
-					case GEAR -> {
-						final double center = s * 0.5;
-						g2.draw(new Ellipse2D.Double(center - s * 0.2, center - s * 0.2, s * 0.4, s * 0.4));
-						g2.setStroke(new BasicStroke((float) (s / 7.0), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-						for (int tooth = 0; tooth < 8; tooth++) {
-							final double angle = Math.PI / 4 * tooth;
-							g2.draw(new Line2D.Double(center + Math.cos(angle) * s * 0.3, center + Math.sin(angle) * s * 0.3,
-								center + Math.cos(angle) * s * 0.4, center + Math.sin(angle) * s * 0.4));
-						}
-					}
-					case HELP -> {
-						g2.draw(new Ellipse2D.Double(s * 0.08, s * 0.08, s * 0.84, s * 0.84));
-						final Font font = baseFont().deriveFont(Font.BOLD, (float) (s * 0.62));
-						g2.setFont(font);
-						final FontMetrics metrics = g2.getFontMetrics();
-						g2.drawString("?", (float) ((s - metrics.stringWidth("?")) / 2.0), (float) ((s - metrics.getHeight()) / 2.0 + metrics.getAscent()));
-					}
-					case SEND -> {
-						final Path2D plane = new Path2D.Double();
-						plane.moveTo(s * 0.08, s * 0.46);
-						plane.lineTo(s * 0.92, s * 0.1);
-						plane.lineTo(s * 0.62, s * 0.92);
-						plane.lineTo(s * 0.46, s * 0.56);
-						plane.closePath();
-						g2.draw(plane);
-						g2.draw(new Line2D.Double(s * 0.46, s * 0.56, s * 0.92, s * 0.1));
-					}
-					case EXPORT, IMPORT -> {
-						final Path2D tray = new Path2D.Double();
-						tray.moveTo(s * 0.14, s * 0.6);
-						tray.lineTo(s * 0.14, s * 0.86);
-						tray.lineTo(s * 0.86, s * 0.86);
-						tray.lineTo(s * 0.86, s * 0.6);
-						g2.draw(tray);
-						g2.draw(new Line2D.Double(s * 0.5, s * 0.12, s * 0.5, s * 0.64));
-						final Path2D arrowHead = new Path2D.Double();
-						if (kind == IconKind.EXPORT) {
-							arrowHead.moveTo(s * 0.3, s * 0.32);
-							arrowHead.lineTo(s * 0.5, s * 0.12);
-							arrowHead.lineTo(s * 0.7, s * 0.32);
-						} else {
-							arrowHead.moveTo(s * 0.3, s * 0.44);
-							arrowHead.lineTo(s * 0.5, s * 0.64);
-							arrowHead.lineTo(s * 0.7, s * 0.44);
-						}
-						g2.draw(arrowHead);
-					}
-					case TRASH -> {
-						g2.draw(new Line2D.Double(s * 0.14, s * 0.26, s * 0.86, s * 0.26));
-						final Path2D handle = new Path2D.Double();
-						handle.moveTo(s * 0.38, s * 0.26);
-						handle.lineTo(s * 0.38, s * 0.12);
-						handle.lineTo(s * 0.62, s * 0.12);
-						handle.lineTo(s * 0.62, s * 0.26);
-						g2.draw(handle);
-						final Path2D body = new Path2D.Double();
-						body.moveTo(s * 0.24, s * 0.26);
-						body.lineTo(s * 0.3, s * 0.88);
-						body.lineTo(s * 0.7, s * 0.88);
-						body.lineTo(s * 0.76, s * 0.26);
-						g2.draw(body);
-					}
-					case FAST_FORWARD -> {
-						for (final double offset : new double[] { 0.06, 0.46 }) {
-							final Path2D triangle = new Path2D.Double();
-							triangle.moveTo(s * offset, s * 0.22);
-							triangle.lineTo(s * offset, s * 0.78);
-							triangle.lineTo(s * (offset + 0.44), s * 0.5);
-							triangle.closePath();
-							g2.fill(triangle);
-							g2.draw(triangle);
-						}
-					}
-					case PLUS -> {
-						g2.draw(new Line2D.Double(s * 0.5, s * 0.2, s * 0.5, s * 0.8));
-						g2.draw(new Line2D.Double(s * 0.2, s * 0.5, s * 0.8, s * 0.5));
-					}
-					case FILE -> {
-						final Path2D file = new Path2D.Double();
-						file.moveTo(s * 0.22, s * 0.08);
-						file.lineTo(s * 0.58, s * 0.08);
-						file.lineTo(s * 0.8, s * 0.3);
-						file.lineTo(s * 0.8, s * 0.92);
-						file.lineTo(s * 0.22, s * 0.92);
-						file.closePath();
-						g2.draw(file);
-						final Path2D fold = new Path2D.Double();
-						fold.moveTo(s * 0.58, s * 0.08);
-						fold.lineTo(s * 0.58, s * 0.3);
-						fold.lineTo(s * 0.8, s * 0.3);
-						g2.draw(fold);
-					}
-					case LOCK -> {
-						g2.draw(new RoundRectangle2D.Double(s * 0.18, s * 0.44, s * 0.64, s * 0.46, s * 0.12, s * 0.12));
-						g2.draw(new Arc2D.Double(s * 0.3, s * 0.1, s * 0.4, s * 0.5, 0, 180, Arc2D.OPEN));
-						g2.draw(new Line2D.Double(s * 0.3, s * 0.35, s * 0.3, s * 0.44));
-						g2.draw(new Line2D.Double(s * 0.7, s * 0.35, s * 0.7, s * 0.44));
-					}
-					case GLOBE -> {
-						g2.draw(new Ellipse2D.Double(s * 0.1, s * 0.1, s * 0.8, s * 0.8));
-						g2.draw(new Ellipse2D.Double(s * 0.32, s * 0.1, s * 0.36, s * 0.8));
-						g2.draw(new Line2D.Double(s * 0.1, s * 0.5, s * 0.9, s * 0.5));
-					}
-					case INFO, ERROR -> {
-						g2.draw(new Ellipse2D.Double(s * 0.08, s * 0.08, s * 0.84, s * 0.84));
-						final double dot = s * 0.13;
-						if (kind == IconKind.INFO) {
-							g2.fill(new Ellipse2D.Double(s * 0.5 - dot / 2, s * 0.27 - dot / 2, dot, dot));
-							g2.draw(new Line2D.Double(s * 0.5, s * 0.44, s * 0.5, s * 0.72));
-						} else {
-							g2.draw(new Line2D.Double(s * 0.5, s * 0.26, s * 0.5, s * 0.54));
-							g2.fill(new Ellipse2D.Double(s * 0.5 - dot / 2, s * 0.71 - dot / 2, dot, dot));
-						}
-					}
-					case WARNING -> {
-						final Path2D triangle = new Path2D.Double();
-						triangle.moveTo(s * 0.5, s * 0.08);
-						triangle.lineTo(s * 0.94, s * 0.88);
-						triangle.lineTo(s * 0.06, s * 0.88);
-						triangle.closePath();
-						g2.draw(triangle);
-						g2.draw(new Line2D.Double(s * 0.5, s * 0.38, s * 0.5, s * 0.6));
-						final double dot = s * 0.12;
-						g2.fill(new Ellipse2D.Double(s * 0.5 - dot / 2, s * 0.74 - dot / 2, dot, dot));
-					}
-					case EDIT -> {
-						final Path2D pencil = new Path2D.Double();
-						pencil.moveTo(s * 0.64, s * 0.14);
-						pencil.lineTo(s * 0.86, s * 0.36);
-						pencil.lineTo(s * 0.36, s * 0.86);
-						pencil.lineTo(s * 0.14, s * 0.86);
-						pencil.lineTo(s * 0.14, s * 0.64);
-						pencil.closePath();
-						g2.draw(pencil);
-						g2.draw(new Line2D.Double(s * 0.54, s * 0.24, s * 0.76, s * 0.46));
-					}
-					case COPY -> {
-						g2.draw(new RoundRectangle2D.Double(s * 0.12, s * 0.3, s * 0.54, s * 0.6, s * 0.12, s * 0.12));
-						final Path2D back = new Path2D.Double();
-						back.moveTo(s * 0.34, s * 0.3);
-						back.lineTo(s * 0.34, s * 0.1);
-						back.lineTo(s * 0.88, s * 0.1);
-						back.lineTo(s * 0.88, s * 0.7);
-						back.lineTo(s * 0.66, s * 0.7);
-						g2.draw(back);
-					}
-					case CHECK -> {
-						final Path2D check = new Path2D.Double();
-						check.moveTo(s * 0.16, s * 0.52);
-						check.lineTo(s * 0.4, s * 0.76);
-						check.lineTo(s * 0.86, s * 0.26);
-						g2.draw(check);
-					}
-					case CHEVRON_DOWN -> {
-						final Path2D chevron = new Path2D.Double();
-						chevron.moveTo(s * 0.24, s * 0.38);
-						chevron.lineTo(s * 0.5, s * 0.64);
-						chevron.lineTo(s * 0.76, s * 0.38);
-						g2.draw(chevron);
-					}
-					default -> {
-						// nothing
-					}
-				}
-			} finally {
-				g2.dispose();
-			}
-		}
-	}
-
 	// ---------------------------------------------------------------- buttons
 
-	/**
-	 * Flat rounded button with hover and pressed effect, painted completely by itself.
-	 */
-	public static class Button extends JButton {
-		/** Serialization version */
-		private static final long serialVersionUID = 1L;
-
-		/** Minimum height of all text buttons, equal for every style, so buttons in a row stay aligned */
-		private static final int TEXT_BUTTON_MIN_HEIGHT = 36;
-
-		/** Color variant */
-		private final ButtonStyle style;
-
-		/**
-		 * Creates a button. Without text the button is square and shows only the icon, so it should get a tooltip.
-		 *
-		 * @param text     button text, null or empty for an icon-only button
-		 * @param iconKind symbol shown left of the text in the text color, null for none
-		 * @param style    color variant
-		 */
-		public Button(final String text, final IconKind iconKind, final ButtonStyle style) {
-			super(text);
-			this.style = style;
-			if (iconKind != null) {
-				setIcon(new ThemeIcon(iconKind, style == ButtonStyle.HEADER && (text == null || text.isEmpty()) ? 20 : 15, TEXT));
-			}
-			setContentAreaFilled(false);
-			setBorderPainted(false);
-			setFocusPainted(false);
-			setOpaque(false);
-			setRolloverEnabled(true);
-			setIconTextGap(8);
-			setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-			if (text == null || text.isEmpty()) {
-				setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7));
-			} else if (style == ButtonStyle.PRIMARY) {
-				setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 22));
-			} else {
-				setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
-			}
-			if (style == ButtonStyle.PRIMARY) {
-				setFont(baseFont().deriveFont(Font.BOLD, baseFont().getSize2D() + 1f));
-			} else {
-				setFont(baseFont());
-			}
-		}
-
-		/**
-		 * Calculates the size from text, icon and padding (independent of the look and feel).
-		 * Text buttons of all styles are at least {@link #TEXT_BUTTON_MIN_HEIGHT} pixels high, icon-only buttons are square.
-		 * An explicitly set preferred size takes precedence.
-		 *
-		 * @return the preferred size
-		 */
-		@Override
-		public Dimension getPreferredSize() {
-			if (isPreferredSizeSet()) {
-				return super.getPreferredSize();
-			}
-			final Insets insets = getInsets();
-			final FontMetrics metrics = getFontMetrics(getFont());
-			final String text = getText();
-			final int textWidth = text == null || text.isEmpty() ? 0 : metrics.stringWidth(text);
-			final Icon icon = getIcon();
-			final int iconWidth = icon == null ? 0 : icon.getIconWidth();
-			final int iconHeight = icon == null ? 0 : icon.getIconHeight();
-			final int gap = textWidth > 0 && iconWidth > 0 ? getIconTextGap() : 0;
-			final int width = insets.left + insets.right + textWidth + gap + iconWidth;
-			final int height = insets.top + insets.bottom + Math.max(textWidth > 0 ? metrics.getHeight() : 0, iconHeight);
-			if (textWidth == 0) {
-				final int side = Math.max(width, height);
-				return new Dimension(side, side);
-			}
-			// Before, primary buttons had a minimum of 36 and all others 32 pixels, so mixed buttons in a FlowLayout row were vertically offset
-			return new Dimension(width, Math.max(height, TEXT_BUTTON_MIN_HEIGHT));
-		}
-
-		/**
-		 * The button never shrinks below its preferred size, so text and icon stay readable.
-		 *
-		 * @return the preferred size
-		 */
-		@Override
-		public Dimension getMinimumSize() {
-			return getPreferredSize();
-		}
-
-		@Override
-		protected void paintComponent(final Graphics graphics) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				final ButtonModel buttonModel = getModel();
-				final boolean enabled = isEnabled();
-				final boolean pressed = buttonModel.isArmed() && buttonModel.isPressed();
-				final boolean hover = buttonModel.isRollover() && enabled;
-				final int width = getWidth();
-				final int height = getHeight();
-				final RoundRectangle2D shape = new RoundRectangle2D.Double(0.5, 0.5, width - 1.0, height - 1.0, BUTTON_ARC, BUTTON_ARC);
-
-				final Color foreground;
-				switch (style) {
-					case PRIMARY -> {
-						if (enabled) {
-							final Color base = pressed ? ACCENT_PRESSED : hover ? ACCENT_HOVER : ACCENT;
-							// Soft glow below the button
-							g2.setColor(withAlpha(ACCENT, hover ? 60 : 35));
-							g2.fill(new RoundRectangle2D.Double(1, 3, width - 2.0, height - 3.0, BUTTON_ARC, BUTTON_ARC));
-							g2.setPaint(new GradientPaint(0, 0, mix(base, Color.WHITE, 0.14), 0, height, base));
-							g2.fill(new RoundRectangle2D.Double(0.5, 0.5, width - 1.0, height - 2.5, BUTTON_ARC, BUTTON_ARC));
-							foreground = Color.WHITE;
-						} else {
-							g2.setColor(DISABLED_BACKGROUND);
-							g2.fill(new RoundRectangle2D.Double(0.5, 0.5, width - 1.0, height - 2.5, BUTTON_ARC, BUTTON_ARC));
-							foreground = DISABLED_TEXT;
-						}
-					}
-					case SECONDARY -> {
-						g2.setColor(!enabled ? new Color(0xF6F7F9) : pressed ? new Color(0xE3E9F5) : hover ? new Color(0xF0F4FB) : CARD);
-						g2.fill(shape);
-						g2.setColor(hover ? withAlpha(ACCENT, 150) : CARD_BORDER);
-						g2.draw(shape);
-						foreground = enabled ? TEXT : DISABLED_TEXT;
-					}
-					case DANGEROUS -> {
-						g2.setColor(!enabled ? new Color(0xF6F7F9) : pressed ? new Color(0xF9DADA) : hover ? DANGER_LIGHT : CARD);
-						g2.fill(shape);
-						g2.setColor(enabled ? withAlpha(DANGER, hover ? 200 : 140) : CARD_BORDER);
-						g2.draw(shape);
-						foreground = enabled ? DANGER : DISABLED_TEXT;
-					}
-					case TOOLBAR -> {
-						if (enabled && (hover || pressed)) {
-							g2.setColor(pressed ? mix(ACCENT_LIGHT, ACCENT, 0.15) : ACCENT_LIGHT);
-							g2.fill(shape);
-						}
-						foreground = enabled ? TEXT : DISABLED_TEXT;
-					}
-					case HEADER -> {
-						if (enabled && (hover || pressed)) {
-							g2.setColor(withAlpha(Color.WHITE, pressed ? 80 : 45));
-							g2.fill(shape);
-						}
-						foreground = enabled ? Color.WHITE : withAlpha(Color.WHITE, 110);
-					}
-					default -> {
-						if (enabled && (hover || pressed)) {
-							g2.setColor(withAlpha(Color.WHITE, pressed ? 80 : 45));
-							g2.fill(shape);
-						}
-						foreground = enabled ? Color.WHITE : withAlpha(Color.WHITE, 110);
-					}
-				}
-
-				paintContent(g2, foreground, width, height - (style == ButtonStyle.PRIMARY ? 2 : 0));
-
-				if (isFocusOwner() && enabled) {
-					g2.setStroke(new BasicStroke(2f));
-					g2.setColor(style == ButtonStyle.HEADER ? withAlpha(Color.WHITE, 160) : withAlpha(ACCENT, style == ButtonStyle.PRIMARY ? 0 : 110));
-					g2.draw(new RoundRectangle2D.Double(1.5, 1.5, width - 3.0, height - 3.0, BUTTON_ARC, BUTTON_ARC));
-				}
-			} finally {
-				g2.dispose();
-			}
-		}
-
-		/**
-		 * Paints icon and text centered within the given size.
-		 *
-		 * @param g2         prepared graphics
-		 * @param foreground color of icon and text
-		 * @param width      available width
-		 * @param height     available height
-		 */
-		private void paintContent(final Graphics2D g2, final Color foreground, final int width, final int height) {
-			final FontMetrics metrics = g2.getFontMetrics(getFont());
-			final String text = getText();
-			final int textWidth = text == null || text.isEmpty() ? 0 : metrics.stringWidth(text);
-			final Icon icon = getIcon();
-			final int iconWidth = icon == null ? 0 : icon.getIconWidth();
-			final int gap = textWidth > 0 && iconWidth > 0 ? getIconTextGap() : 0;
-			int x = (width - (iconWidth + gap + textWidth)) / 2;
-			if (icon != null) {
-				final int iconY = (height - icon.getIconHeight()) / 2;
-				if (icon instanceof final ThemeIcon themeIcon) {
-					themeIcon.paint(g2, x, iconY, foreground);
-				} else {
-					final Graphics2D iconGraphics = (Graphics2D) g2.create();
-					if (!isEnabled()) {
-						iconGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-					}
-					icon.paintIcon(this, iconGraphics, x, iconY);
-					iconGraphics.dispose();
-				}
-				x += iconWidth + gap;
-			}
-			if (textWidth > 0) {
-				g2.setFont(getFont());
-				g2.setColor(foreground);
-				g2.drawString(text, x, (height - metrics.getHeight()) / 2 + metrics.getAscent());
-			}
-		}
-	}
-
 	// ---------------------------------------------------------------- header
-
-	/**
-	 * Header band with a horizontal color gradient and some decorative translucent circles.
-	 */
-	public static class GradientHeader extends JPanel {
-		/** Serialization version */
-		private static final long serialVersionUID = 1L;
-
-		/** Left color of the gradient */
-		private Color startColor = HEADER_START;
-		/** Right color of the gradient */
-		private Color endColor = HEADER_END;
-
-		/**
-		 * Creates the header with a BorderLayout (e.g. logo WEST, title CENTER, buttons EAST) and inner padding.
-		 */
-		public GradientHeader() {
-			super(new BorderLayout(14, 0));
-			setOpaque(true);
-			setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 14));
-		}
-
-		/**
-		 * Changes the gradient colors, e.g. to {@link #DANGER_HEADER_START} and {@link #DANGER_HEADER_END} for errors.
-		 *
-		 * @param start left color of the gradient
-		 * @param end   right color of the gradient
-		 */
-		public void setColors(final Color start, final Color end) {
-			startColor = start;
-			endColor = end;
-			repaint();
-		}
-
-		@Override
-		protected void paintComponent(final Graphics graphics) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				final int width = getWidth();
-				final int height = getHeight();
-				g2.setPaint(new GradientPaint(0, 0, startColor, width, height, endColor));
-				g2.fillRect(0, 0, width, height);
-				g2.setColor(withAlpha(Color.WHITE, 18));
-				g2.fill(new Ellipse2D.Double(width * 0.62, -height * 1.2, height * 2.6, height * 2.6));
-				g2.fill(new Ellipse2D.Double(width * 0.80, height * 0.25, height * 1.6, height * 1.6));
-				g2.setColor(withAlpha(Color.WHITE, 12));
-				g2.fill(new Ellipse2D.Double(width * 0.45, height * 0.55, height * 1.1, height * 1.1));
-			} finally {
-				g2.dispose();
-			}
-		}
-	}
 
 	/**
 	 * White round badge with the application icon (or a phone symbol if no icon is available) for the header.
@@ -857,83 +289,6 @@ public final class ModernUi {
 	// ---------------------------------------------------------------- cards
 
 	/**
-	 * White rounded panel with soft shadow and an optional title row.
-	 * The content is added with {@link #setContent(Component)}, additional components for the right side of the
-	 * title row with {@link #addHeaderComponent(Component)}.
-	 */
-	public static class Card extends JPanel {
-		/** Serialization version */
-		private static final long serialVersionUID = 1L;
-		/** Width of the shadow around the card in pixels */
-		private static final int SHADOW = 5;
-
-		/** Container at the right side of the title row */
-		private final JPanel headerAccessories = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-
-		/**
-		 * Creates a card.
-		 *
-		 * @param title    title shown in the first row, null for a card without title row
-		 * @param iconKind symbol shown left of the title, null for none
-		 * @param padding  inner distance between the card's edge and its content in pixels
-		 */
-		public Card(final String title, final IconKind iconKind, final int padding) {
-			super(new BorderLayout(0, 10));
-			setOpaque(false);
-			setBorder(BorderFactory.createEmptyBorder(SHADOW - 2 + padding, SHADOW + padding, SHADOW + 2 + padding, SHADOW + padding));
-			if (title != null) {
-				final JPanel header = new JPanel(new BorderLayout(10, 0));
-				header.setOpaque(false);
-				header.add(createTitleLabel(title, iconKind), BorderLayout.WEST);
-				headerAccessories.setOpaque(false);
-				header.add(headerAccessories, BorderLayout.EAST);
-				add(header, BorderLayout.NORTH);
-			}
-		}
-
-		/**
-		 * Sets the content of the card, which takes all space below the title row.
-		 *
-		 * @param content component to show
-		 */
-		public void setContent(final Component content) {
-			add(content, BorderLayout.CENTER);
-		}
-
-		/**
-		 * Adds a component (e.g. a small button) at the right side of the title row.
-		 * Only shown for cards with a title.
-		 *
-		 * @param component component to add
-		 */
-		public void addHeaderComponent(final Component component) {
-			headerAccessories.add(component);
-		}
-
-		@Override
-		protected void paintComponent(final Graphics graphics) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				final int width = getWidth();
-				final int height = getHeight();
-				// Soft shadow, slightly shifted downwards
-				for (int layer = 0; layer < SHADOW; layer++) {
-					g2.setColor(new Color(20, 30, 60, 4 + layer * 2));
-					final double inset = layer;
-					g2.fill(new RoundRectangle2D.Double(inset, inset + 2, width - inset * 2, height - inset * 2 - 1, CARD_ARC + SHADOW - layer, CARD_ARC + SHADOW - layer));
-				}
-				final RoundRectangle2D shape = new RoundRectangle2D.Double(SHADOW, SHADOW - 1, width - SHADOW * 2.0, height - SHADOW * 2.0, CARD_ARC, CARD_ARC);
-				g2.setColor(CARD);
-				g2.fill(shape);
-				g2.setColor(CARD_BORDER);
-				g2.draw(shape);
-			} finally {
-				g2.dispose();
-			}
-		}
-	}
-
-	/**
 	 * Bold title with a small accent colored icon in a soft square.
 	 *
 	 * @param text     title text
@@ -949,45 +304,6 @@ public final class ModernUi {
 			label.setIconTextGap(9);
 		}
 		return label;
-	}
-
-	/** Icon in a light accent colored rounded square, used for card titles */
-	private static class BadgeIcon implements Icon {
-		/** Width and height of the badge in pixels */
-		private static final int SIZE = 26;
-		/** Symbol painted in the center of the badge */
-		private final ThemeIcon icon;
-
-		/**
-		 * Creates the badge for the given symbol.
-		 *
-		 * @param kind symbol to show
-		 */
-		BadgeIcon(final IconKind kind) {
-			icon = new ThemeIcon(kind, 16, ACCENT);
-		}
-
-		@Override
-		public int getIconWidth() {
-			return SIZE;
-		}
-
-		@Override
-		public int getIconHeight() {
-			return SIZE;
-		}
-
-		@Override
-		public void paintIcon(final Component component, final Graphics graphics, final int x, final int y) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				g2.setColor(ACCENT_LIGHT);
-				g2.fill(new RoundRectangle2D.Double(x, y, SIZE, SIZE, 9, 9));
-			} finally {
-				g2.dispose();
-			}
-			icon.paintIcon(component, graphics, x + (SIZE - 16) / 2, y + (SIZE - 16) / 2);
-		}
 	}
 
 	/**
@@ -1059,80 +375,6 @@ public final class ModernUi {
 
 	// ---------------------------------------------------------------- chips
 
-	/** Color variants of {@link Chip} */
-	public enum ChipStyle {
-		/** Grey background, normal text */
-		NEUTRAL,
-		/** Light accent background, accent colored text */
-		ACCENTUATED,
-		/** Light green background, green text */
-		SUCCESSFUL,
-		/** Light orange background, orange text */
-		ALERT,
-		/** Light red background, red text */
-		DANGEROUS
-	}
-
-	/**
-	 * Pill shaped label for compact information like "Model: Pixel 8".
-	 */
-	public static class Chip extends JLabel {
-		/** Serialization version */
-		private static final long serialVersionUID = 1L;
-		/** Pill background color */
-		private final Color background;
-
-		/**
-		 * Creates a chip showing an optional grey caption followed by the bold value.
-		 *
-		 * @param caption grey text in front of the value, null or empty for none
-		 * @param value   bold value text
-		 * @param style   color variant
-		 */
-		public Chip(final String caption, final String value, final ChipStyle style) {
-			final Color foreground = switch (style) {
-				case ACCENTUATED -> ACCENT_PRESSED;
-				case SUCCESSFUL -> SUCCESS;
-				case ALERT -> WARNING;
-				case DANGEROUS -> DANGER;
-				case NEUTRAL -> TEXT;
-				default -> TEXT;
-			};
-			background = switch (style) {
-				case ACCENTUATED -> ACCENT_LIGHT;
-				case SUCCESSFUL -> SUCCESS_LIGHT;
-				case ALERT -> WARNING_LIGHT;
-				case DANGEROUS -> DANGER_LIGHT;
-				case NEUTRAL -> NEUTRAL_LIGHT;
-				default -> NEUTRAL_LIGHT;
-			};
-			final StringBuilder html = new StringBuilder("<html><span style='color:").append(toHex(MUTED)).append("'>");
-			if (caption != null && !caption.isEmpty()) {
-				html.append(escapeHtml(caption)).append("&nbsp;</span>");
-			} else {
-				html.append("</span>");
-			}
-			html.append("<b style='color:").append(toHex(foreground)).append("'>").append(escapeHtml(value)).append("</b></html>");
-			setText(html.toString());
-			setFont(baseFont());
-			setOpaque(false);
-			setHorizontalAlignment(SwingConstants.CENTER);
-			setBorder(BorderFactory.createEmptyBorder(4, 11, 4, 11));
-		}
-
-		@Override
-		protected void paintComponent(final Graphics graphics) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				g2.setColor(background);
-				g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), getHeight(), getHeight()));
-			} finally {
-				g2.dispose();
-			}
-			super.paintComponent(graphics);
-		}
-	}
-
 	// ---------------------------------------------------------------- progress bar
 
 	/**
@@ -1148,7 +390,7 @@ public final class ModernUi {
 
 			@Override
 			public void updateUI() {
-				setUI(new ModernProgressBarUI());
+				setUI(new ProgressBar());
 			}
 		};
 		progressBar.setOpaque(false);
@@ -1156,66 +398,6 @@ public final class ModernUi {
 		progressBar.setBorder(BorderFactory.createEmptyBorder());
 		progressBar.setFont(baseFont().deriveFont(Font.BOLD, Math.max(10f, baseFont().getSize2D() - 1f)));
 		return progressBar;
-	}
-
-	/** Paints the progress bar of {@link #createProgressBar()} completely by itself */
-	private static class ModernProgressBarUI extends BasicProgressBarUI {
-		/** Creates the UI */
-		ModernProgressBarUI() {
-			// nothing to initialize
-		}
-
-		@Override
-		public void paint(final Graphics graphics, final JComponent component) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				final int width = progressBar.getWidth();
-				final int height = progressBar.getHeight();
-				final RoundRectangle2D track = new RoundRectangle2D.Double(0, 0, width, height, height, height);
-				g2.setColor(new Color(0xE3E7EF));
-				g2.fill(track);
-				g2.clip(track);
-				final GradientPaint fill = new GradientPaint(0, 0, ACCENT, width, 0, HEADER_END);
-				if (progressBar.isIndeterminate()) {
-					final Rectangle box = getBox(new Rectangle());
-					if (box != null) {
-						g2.setPaint(fill);
-						g2.fill(new RoundRectangle2D.Double(box.x, 0, box.width, height, height, height));
-					}
-				} else {
-					final double percent = progressBar.getPercentComplete();
-					if (percent > 0) {
-						final double fillWidth = Math.max(height, width * percent);
-						g2.setPaint(fill);
-						g2.fill(new RoundRectangle2D.Double(0, 0, fillWidth, height, height, height));
-					}
-				}
-				final String text = progressBar.isStringPainted() ? progressBar.getString() : null;
-				if (text != null && !text.isEmpty()) {
-					g2.setFont(progressBar.getFont());
-					final FontMetrics metrics = g2.getFontMetrics();
-					final int textX = (width - metrics.stringWidth(text)) / 2;
-					final int textY = (height - metrics.getHeight()) / 2 + metrics.getAscent();
-					g2.setColor(TEXT);
-					g2.drawString(text, textX, textY);
-					if (!progressBar.isIndeterminate() && progressBar.getPercentComplete() > 0) {
-						// The part of the text lying on the colored fill is drawn in white
-						final Graphics2D fillTextGraphics = (Graphics2D) g2.create();
-						fillTextGraphics.clip(new Rectangle(0, 0, (int) Math.max(height, width * progressBar.getPercentComplete()), height));
-						fillTextGraphics.setColor(Color.WHITE);
-						fillTextGraphics.drawString(text, textX, textY);
-						fillTextGraphics.dispose();
-					}
-				}
-			} finally {
-				g2.dispose();
-			}
-		}
-
-		@Override
-		protected int getBoxLength(final int availableLength, final int otherDimension) {
-			return Math.max(otherDimension * 3, availableLength / 4);
-		}
 	}
 
 	// ---------------------------------------------------------------- scroll and split panes
@@ -1252,7 +434,7 @@ public final class ModernUi {
 	 * @param trackColor background of the track
 	 */
 	private static void styleScrollBar(final JScrollBar scrollBar, final Color trackColor) {
-		scrollBar.setUI(new SlimScrollBarUI(trackColor));
+		scrollBar.setUI(new ScrollBar(trackColor));
 		scrollBar.setOpaque(true);
 		scrollBar.setBackground(trackColor);
 		scrollBar.setUnitIncrement(16);
@@ -1260,70 +442,6 @@ public final class ModernUi {
 			scrollBar.setPreferredSize(new Dimension(11, 0));
 		} else {
 			scrollBar.setPreferredSize(new Dimension(0, 11));
-		}
-	}
-
-	/** Scroll bar without arrow buttons and with a slim rounded thumb */
-	private static class SlimScrollBarUI extends BasicScrollBarUI {
-		/** Background of the track */
-		private final Color barTrackColor;
-
-		/**
-		 * Creates the UI with the given track color.
-		 *
-		 * @param barTrackColor background of the track
-		 */
-		SlimScrollBarUI(final Color barTrackColor) {
-			this.barTrackColor = barTrackColor;
-		}
-
-		@Override
-		protected JButton createDecreaseButton(final int orientation) {
-			return createInvisibleButton();
-		}
-
-		@Override
-		protected JButton createIncreaseButton(final int orientation) {
-			return createInvisibleButton();
-		}
-
-		/**
-		 * Creates a zero sized replacement for the arrow buttons.
-		 *
-		 * @return the invisible button
-		 */
-		private static JButton createInvisibleButton() {
-			final JButton button = new JButton();
-			button.setPreferredSize(new Dimension(0, 0));
-			button.setMinimumSize(new Dimension(0, 0));
-			button.setMaximumSize(new Dimension(0, 0));
-			return button;
-		}
-
-		@Override
-		protected void paintTrack(final Graphics graphics, final JComponent component, final Rectangle trackBounds) {
-			graphics.setColor(barTrackColor);
-			graphics.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
-		}
-
-		@Override
-		protected void paintThumb(final Graphics graphics, final JComponent component, final Rectangle thumbBounds) {
-			if (thumbBounds.isEmpty() || !scrollbar.isEnabled()) {
-				return;
-			}
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				final boolean vertical = scrollbar.getOrientation() == Adjustable.VERTICAL;
-				final double thickness = 6;
-				final double x = vertical ? thumbBounds.x + (thumbBounds.width - thickness) / 2 : thumbBounds.x + 2;
-				final double y = vertical ? thumbBounds.y + 2 : thumbBounds.y + (thumbBounds.height - thickness) / 2;
-				final double width = vertical ? thickness : thumbBounds.width - 4;
-				final double height = vertical ? thumbBounds.height - 4 : thickness;
-				g2.setColor(isDragging || isThumbRollover() ? new Color(0x9AA3B5) : new Color(0xC6CCD8));
-				g2.fill(new RoundRectangle2D.Double(x, y, width, height, thickness, thickness));
-			} finally {
-				g2.dispose();
-			}
 		}
 	}
 
@@ -1381,100 +499,6 @@ public final class ModernUi {
 	}
 
 	// ---------------------------------------------------------------- input fields
-
-	/**
-	 * Rounded border with inner padding for text fields and scroll panes. Shows an accent colored outline
-	 * while an editable text component has the focus. The corners outside the rounded outline are filled
-	 * with the surrounding background, so the component's rectangular background does not show there.
-	 */
-	public static class RoundedFieldBorder extends AbstractBorder {
-		/** Serialization version */
-		private static final long serialVersionUID = 1L;
-		/** Corner diameter */
-		private static final int ARC = 10;
-
-		/** Inner padding at top and bottom */
-		private final int vertical;
-		/** Inner padding at left and right */
-		private final int horizontal;
-		/** Component whose focus decides the outline color, null for the bordered component itself */
-		private final Component focusSource;
-
-		/**
-		 * Creates a border whose outline shows the focus of the bordered component itself.
-		 *
-		 * @param vertical   inner padding at top and bottom in pixels
-		 * @param horizontal inner padding at left and right in pixels
-		 */
-		public RoundedFieldBorder(final int vertical, final int horizontal) {
-			this(vertical, horizontal, null);
-		}
-
-		/**
-		 * Creates a border whose outline shows the focus of another component.
-		 *
-		 * @param vertical    inner padding at top and bottom in pixels
-		 * @param horizontal  inner padding at left and right in pixels
-		 * @param focusSource component whose focus decides the outline color, e.g. the text area inside a
-		 *                    scroll pane; null for the bordered component itself
-		 */
-		public RoundedFieldBorder(final int vertical, final int horizontal, final Component focusSource) {
-			this.vertical = vertical;
-			this.horizontal = horizontal;
-			this.focusSource = focusSource;
-		}
-
-		@Override
-		public Insets getBorderInsets(final Component component) {
-			return new Insets(vertical, horizontal, vertical, horizontal);
-		}
-
-		@Override
-		public Insets getBorderInsets(final Component component, final Insets insets) {
-			insets.set(vertical, horizontal, vertical, horizontal);
-			return insets;
-		}
-
-		@Override
-		public void paintBorder(final Component component, final Graphics graphics, final int x, final int y, final int width, final int height) {
-			final Graphics2D g2 = prepare(graphics);
-			try {
-				final RoundRectangle2D shape = new RoundRectangle2D.Double(x + 0.5, y + 0.5, width - 1.0, height - 1.0, ARC, ARC);
-				final Area corners = new Area(new Rectangle(x, y, width, height));
-				corners.subtract(new Area(shape));
-				g2.setColor(getSurroundingBackground(component));
-				g2.fill(corners);
-
-				final Component focusComponent = focusSource != null ? focusSource : component;
-				final boolean focused = focusComponent.isFocusOwner() && focusComponent.isEnabled()
-					&& (!(focusComponent instanceof final JTextComponent textComponent) || textComponent.isEditable());
-				g2.setColor(focused ? ACCENT : CARD_BORDER);
-				g2.setStroke(new BasicStroke(focused ? 1.5f : 1f));
-				g2.draw(shape);
-			} finally {
-				g2.dispose();
-			}
-		}
-
-		/**
-		 * Returns the background of the first opaque parent (a card counts as opaque white), used for the corners.
-		 *
-		 * @param component bordered component
-		 * @return the surrounding background color
-		 */
-		private static Color getSurroundingBackground(final Component component) {
-			Component parent = component.getParent();
-			while (parent != null) {
-				if (parent instanceof Card) {
-					return CARD;
-				} else if (parent.isOpaque()) {
-					return parent.getBackground();
-				}
-				parent = parent.getParent();
-			}
-			return CARD;
-		}
-	}
 
 	/**
 	 * Gives a text field a rounded border with padding and an accent colored outline while focused.
@@ -1576,45 +600,6 @@ public final class ModernUi {
 	 */
 	public static Color getStripedRowBackground(final int row) {
 		return row % 2 == 0 ? CARD : TABLE_ALTERNATE_ROW;
-	}
-
-	/**
-	 * Flat table header cell: bold grey text on a light background with thin separator lines.
-	 */
-	public static class TableHeaderRenderer extends DefaultTableCellRenderer {
-		/** Serialization version */
-		private static final long serialVersionUID = 1L;
-
-		/**
-		 * Creates the renderer with centered texts.
-		 */
-		public TableHeaderRenderer() {
-			setHorizontalAlignment(SwingConstants.CENTER);
-			setOpaque(true);
-		}
-
-		/**
-		 * Configures the renderer for a header cell. Selection and focus are not shown in the header.
-		 *
-		 * @param table      the table, may be null
-		 * @param value      the column name
-		 * @param isSelected ignored
-		 * @param hasFocus   ignored
-		 * @param row        the row index (-1 for the header)
-		 * @param column     the view index of the column
-		 * @return this renderer
-		 */
-		@Override
-		public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row, final int column) {
-			super.getTableCellRendererComponent(table, value, false, false, row, column);
-			setFont(table != null && table.getTableHeader() != null ? table.getTableHeader().getFont() : baseFont().deriveFont(Font.BOLD));
-			setForeground(MUTED);
-			setBackground(TABLE_HEADER_BACKGROUND);
-			setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 1, CARD_BORDER),
-				BorderFactory.createEmptyBorder(4, 6, 4, 6)));
-			return this;
-		}
 	}
 
 	/**

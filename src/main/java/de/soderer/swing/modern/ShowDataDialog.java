@@ -10,7 +10,6 @@ import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import de.soderer.swing.modern.ModernUi.Button;
 import de.soderer.utilities.LangResources;
 
 /**

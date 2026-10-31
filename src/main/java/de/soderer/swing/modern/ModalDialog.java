@@ -14,8 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import de.soderer.swing.modern.ModernUi.Button;
-import de.soderer.swing.modern.ModernUi.ThemeIcon;
 
 /**
  * Base class of document modal dialogs in the {@link ModernUi} design that return a value.
@@ -49,7 +47,7 @@ public abstract class ModalDialog<T> extends JDialog {
 	protected T returnValue;
 
 	/** Gradient header with icon and title */
-	private final ModernUi.GradientHeader header;
+	private final GradientHeader header;
 	/** Title text in the header, follows {@link #setTitle(String)} */
 	private final JLabel headerLabel;
 	/** White area for the dialog's components */
@@ -85,7 +83,7 @@ public abstract class ModalDialog<T> extends JDialog {
 		// and prevent the AWT auto shutdown (JVM would not exit after the last window was closed)
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-		header = new ModernUi.GradientHeader();
+		header = new GradientHeader();
 		header.setBorder(BorderFactory.createEmptyBorder(11, 16, 11, 16));
 		headerLabel = new JLabel(title);
 		headerLabel.setForeground(Color.WHITE);

@@ -1,6 +1,5 @@
 package de.soderer.swing.modern;
 
-import de.soderer.swing.modern.ModernUi.Button;
 
 /** Color variants of {@link Button} */
 public enum ButtonStyle {

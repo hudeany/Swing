@@ -69,8 +69,8 @@ public class DropDown extends de.soderer.swing.DropDown {
 	 */
 	@Override
 	protected JButton createDropdownButton() {
-		final ModernUi.Button button = new ModernUi.Button(null, null, ButtonStyle.TOOLBAR);
-		button.setIcon(new ModernUi.ThemeIcon(IconKind.CHEVRON_DOWN, 14, ModernUi.MUTED));
+		final Button button = new Button(null, null, ButtonStyle.TOOLBAR);
+		button.setIcon(new ThemeIcon(IconKind.CHEVRON_DOWN, 14, ModernUi.MUTED));
 		button.setBorder(BorderFactory.createEmptyBorder());
 		// The height follows the input field (BorderLayout), only the width matters
 		button.setPreferredSize(new Dimension(BUTTON_WIDTH, 10));
@@ -100,7 +100,7 @@ public class DropDown extends de.soderer.swing.DropDown {
 		textPane.setDisabledTextColor(ModernUi.DISABLED_TEXT);
 
 		setOpaque(true);
-		setBorder(new ModernUi.RoundedFieldBorder(2, 4, textPane));
+		setBorder(new RoundedFieldBorder(2, 4, textPane));
 
 		applyBackground();
 	}
