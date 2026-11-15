@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
@@ -312,7 +313,7 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 	}
 
 	/**
-	 * Sets value, percentage text and ETA tooltip of a progress bar. Must be called on the event dispatch thread.
+	 * Sets value, percentage text and tooltip (items done / items to do and ETA) of a progress bar. Must be called on the event dispatch thread.
 	 *
 	 * @param progressBar progress bar to update
 	 * @param start       start time of the work, used for the ETA calculation
@@ -329,12 +330,31 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 		progressBar.setString(value + "%");
 		progressBar.setStringPainted(true);
 
+		progressBar.setToolTipText(createProgressToolTipText(start, itemsToDo, itemsDone));
+	}
+
+	/**
+	 * Tooltip text of a progress bar: the number of done items (and of all items, if known), e.g. "17 / 20",
+	 * and the estimated end, if it can be calculated yet.
+	 *
+	 * @param start     start time of the work, used for the ETA calculation
+	 * @param itemsToDo total number of items, 0 or below if unknown
+	 * @param itemsDone number of items done
+	 * @return the tooltip text (HTML for two lines, if the ETA is known)
+	 */
+	protected static String createProgressToolTipText(final LocalDateTime start, final long itemsToDo, final long itemsDone) {
+		final NumberFormat countFormat = NumberFormat.getIntegerInstance(Locale.getDefault());
+		String toolTipText = countFormat.format(itemsDone);
+		if (itemsToDo > 0) {
+			toolTipText += " / " + countFormat.format(itemsToDo);
+		}
+
 		final LocalDateTime estimatedEnd = DateUtilities.calculateETA(start, itemsToDo, itemsDone);
 		if (estimatedEnd != null) {
-			progressBar.setToolTipText("ETA: " + DateUtilities.formatDate(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()), estimatedEnd));
-		} else {
-			progressBar.setToolTipText(null);
+			// HTML for the line break, the formatted values contain no HTML special characters
+			toolTipText = "<html>" + toolTipText + "<br>ETA: " + DateUtilities.formatDate(DateUtilities.getDateTimeFormatWithSecondsPattern(Locale.getDefault()), estimatedEnd) + "</html>";
 		}
+		return toolTipText;
 	}
 
 	/**
