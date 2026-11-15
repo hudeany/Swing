@@ -242,7 +242,7 @@ public class SwingHelpersTest {
 		assertEquals(25, progressBar.getValue());
 		assertEquals("25%", progressBar.getString());
 		assertTrue(progressBar.isStringPainted());
-		assertTrue(progressBar.getToolTipText().startsWith("ETA: "));
+		assertTrue(progressBar.getToolTipText().startsWith("<html>25 / 100<br>ETA: "));
 
 		// Values are limited to 0..100
 		ProgressDialog.updateProgressBar(progressBar, LocalDateTime.now().minusSeconds(10), 10, 20);
