@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.RoundRectangle2D;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 /**
@@ -25,6 +26,9 @@ public class Card extends JPanel {
 	/** Container at the right side of the title row */
 	private final JPanel headerAccessories = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
+	/** Title shown at the left side of the title row, null for a card without title row */
+	private final JComponent titleComponent;
+
 	/**
 	 * Creates a card.
 	 *
@@ -39,11 +43,23 @@ public class Card extends JPanel {
 		if (title != null) {
 			final JPanel header = new JPanel(new BorderLayout(10, 0));
 			header.setOpaque(false);
-			header.add(ModernUi.createTitleLabel(title, iconKind), BorderLayout.WEST);
+			titleComponent = ModernUi.createTitleLabel(title, iconKind);
+			header.add(titleComponent, BorderLayout.WEST);
 			headerAccessories.setOpaque(false);
 			header.add(headerAccessories, BorderLayout.EAST);
 			add(header, BorderLayout.NORTH);
+		} else {
+			titleComponent = null;
 		}
+	}
+
+	/**
+	 * Title shown at the left side of the title row, e.g. to make the title clickable or to add a tooltip.
+	 *
+	 * @return title component, null for a card without title row
+	 */
+	public JComponent getTitleComponent() {
+		return titleComponent;
 	}
 
 	/**
