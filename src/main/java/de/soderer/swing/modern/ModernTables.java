@@ -28,7 +28,7 @@ public final class ModernTables {
 	 * @param tableModel model of the table
 	 * @return the table
 	 */
-	static JTable createTable(final TableModel tableModel) {
+	public static JTable createTable(final TableModel tableModel) {
 		final JTable table = new JTable(tableModel) {
 			private static final long serialVersionUID = -1867012655337310485L;
 
@@ -60,7 +60,7 @@ public final class ModernTables {
 	 * @param height preferred height
 	 * @return the scroll pane
 	 */
-	static JScrollPane createScrollPane(final JTable table, final int width, final int height) {
+	public static JScrollPane createScrollPane(final JTable table, final int width, final int height) {
 		final JScrollPane scrollPane = new JScrollPane(table);
 		ModernUi.styleScrollPane(scrollPane, ModernUi.CARD);
 		scrollPane.setPreferredSize(new Dimension(width, height));
