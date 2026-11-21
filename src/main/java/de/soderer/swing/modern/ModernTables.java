@@ -14,7 +14,7 @@ import javax.swing.table.TableModel;
  * Tables in the ModernUi design for the dialogs of the application: striped rows, cell padding and no vertical grid
  * lines.
  */
-final class ModernTables {
+public final class ModernTables {
 	/** Horizontal padding inside the cells */
 	private static final int CELL_PADDING = 8;
 
