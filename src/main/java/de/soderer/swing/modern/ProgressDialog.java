@@ -406,4 +406,16 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 			SwingUtilities.invokeLater(() -> changeTitle(newCommentStringFormat));
 		}
 	}
+
+	/**
+	 * Creates a progress bar in the modern design. Used for the main progress bar
+	 * and by subclasses for additional progress bars.
+	 *
+	 * @return new styled progress bar with range 0 to 100
+	 */
+	protected static JProgressBar createProgressBar() {
+		final JProgressBar progressBar = new JProgressBar(0, 100);
+		// TODO: apply the same ModernUi styling as for the main progress bar
+		return progressBar;
+	}
 }

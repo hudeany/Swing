@@ -69,6 +69,8 @@ public class DualProgressDialog<T extends WorkerDual<?>> extends ProgressDialog<
 	@Override
 	protected void createAdditionalComponents(final JPanel panel) {
 		final JPanel subCommentLabelPanel = new JPanel();
+		// Transparent so the modern card background of the dialog shows through
+		subCommentLabelPanel.setOpaque(false);
 		subCommentLabelPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 		subCommentStringFormat = "Item";
 		subItemLabel = new JLabel("Item");
@@ -76,9 +78,11 @@ public class DualProgressDialog<T extends WorkerDual<?>> extends ProgressDialog<
 		panel.add(subCommentLabelPanel);
 
 		final JPanel subItemPanel = new JPanel();
+		subItemPanel.setOpaque(false);
 		subItemPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-		subItemProgressBar = new JProgressBar(0, 100);
-		subItemProgressBar.setPreferredSize(new Dimension(380, 19));
+		// Created by the same factory as the main progress bar, so both bars share the modern design
+		subItemProgressBar = createProgressBar();
+		subItemProgressBar.setPreferredSize(new Dimension(380, subItemProgressBar.getPreferredSize().height));
 		subItemPanel.add(subItemProgressBar);
 		panel.add(subItemPanel);
 	}
