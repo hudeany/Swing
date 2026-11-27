@@ -50,6 +50,9 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 	/** Width of the progress bar */
 	private static final int PROGRESS_BAR_WIDTH = 380;
 
+	/** Height of the progress bar */
+	private static final int PROGRESS_BAR_HEIGHT = 20;
+
 	/**
 	 * Label showing the comment text, null if no comment text format was given.
 	 */
@@ -121,10 +124,7 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 			getContentArea().add(commentLabel, BorderLayout.NORTH);
 		}
 
-		progressBar = ModernUi.createProgressBar();
-		progressBar.setMinimum(0);
-		progressBar.setMaximum(100);
-		progressBar.setPreferredSize(new Dimension(PROGRESS_BAR_WIDTH, 20));
+		progressBar = createProgressBar();
 		getContentArea().add(progressBar, BorderLayout.CENTER);
 
 		final JPanel additionalComponentsPanel = new JPanel();
@@ -408,14 +408,16 @@ public class ProgressDialog<T extends WorkerSimple<?>> extends ModalDialog<Resul
 	}
 
 	/**
-	 * Creates a progress bar in the modern design. Used for the main progress bar
-	 * and by subclasses for additional progress bars.
+	 * Creates a progress bar in the modern design with range 0 to 100 and the common size. Used for the main
+	 * progress bar and by subclasses for additional progress bars, so all bars of a dialog look the same.
 	 *
-	 * @return new styled progress bar with range 0 to 100
+	 * @return new styled progress bar
 	 */
 	protected static JProgressBar createProgressBar() {
-		final JProgressBar progressBar = new JProgressBar(0, 100);
-		// TODO: apply the same ModernUi styling as for the main progress bar
+		final JProgressBar progressBar = ModernUi.createProgressBar();
+		progressBar.setMinimum(0);
+		progressBar.setMaximum(100);
+		progressBar.setPreferredSize(new Dimension(PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT));
 		return progressBar;
 	}
 }

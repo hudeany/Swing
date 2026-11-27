@@ -1,6 +1,5 @@
 package de.soderer.swing.modern;
 
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.time.LocalDateTime;
@@ -74,15 +73,16 @@ public class DualProgressDialog<T extends WorkerDual<?>> extends ProgressDialog<
 		subCommentLabelPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 		subCommentStringFormat = "Item";
 		subItemLabel = new JLabel("Item");
+		// Same text color as the comment label of the main progress bar
+		subItemLabel.setForeground(ModernUi.MUTED);
 		subCommentLabelPanel.add(subItemLabel);
 		panel.add(subCommentLabelPanel);
 
 		final JPanel subItemPanel = new JPanel();
 		subItemPanel.setOpaque(false);
 		subItemPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-		// Created by the same factory as the main progress bar, so both bars share the modern design
+		// Created by the same factory as the main progress bar, so both bars share the modern design and size
 		subItemProgressBar = createProgressBar();
-		subItemProgressBar.setPreferredSize(new Dimension(380, subItemProgressBar.getPreferredSize().height));
 		subItemPanel.add(subItemProgressBar);
 		panel.add(subItemPanel);
 	}
